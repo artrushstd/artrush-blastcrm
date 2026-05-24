@@ -1,7 +1,7 @@
-console.log("Sistem CRM Premium & WA Blast Engine diaktifkan...");
+console.log("Sistem CRM Premium & WA Blast Engine aktif...");
 
 // ==========================================
-// 1. INISIALISASI SUPABASE
+// 1. INISIALISASI SUPABASE (SESUAI CREDENTIALS USER)
 // ==========================================
 const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
@@ -107,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- C. DARK MODE TOGGLE ---
     const darkToggle = document.getElementById('darkModeToggle');
-    
     if (darkToggle) {
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             html.classList.add('dark');
@@ -159,10 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // MODULE: ADVANCED CRM CUSTOMER ENGINE
+    // MODULE: ADVANCED CRM CUSTOMER ENGINE (SINKRON SUPABASE 'contacts')
     // ==========================================
-    
-    // CRM Elements
     const crmTableBody = document.getElementById('crmTableBody');
     const crmEmptyState = document.getElementById('crmEmptyState');
     const crmTableContainer = document.getElementById('crmTableContainer');
@@ -171,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const txtBulkSelectedCount = document.getElementById('txtBulkSelectedCount');
     const chkSelectAllCRM = document.getElementById('chkSelectAllCRM');
 
-    // Customer Modal Elements
     const customerModal = document.getElementById('customerModal');
     const customerForm = document.getElementById('customerForm');
     const btnAddCustomer = document.getElementById('btnAddCustomer');
@@ -179,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const custModalBackdrop = document.getElementById('custModalBackdrop');
     const waValidationWarning = document.getElementById('waValidationWarning');
 
-    // Drawer Elements (Detail Notion-style)
     const customerDrawer = document.getElementById('customerDrawer');
     const btnCloseDrawer = document.getElementById('btnCloseDrawer');
     const drawerAvatar = document.getElementById('drawerAvatar');
@@ -193,40 +188,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveDrawerNote = document.getElementById('btnSaveDrawerNote');
     const drawerTimeline = document.getElementById('drawerTimeline');
 
-    // Saved Segments List Elements
     const badgeSegAll = document.getElementById('badgeSegAll');
     const badgeSegVip = document.getElementById('badgeSegVip');
     const badgeSegHot = document.getElementById('badgeSegHot');
     const badgeSegDormant = document.getElementById('badgeSegDormant');
 
-    // Analytics Counter
     const crmStatTotal = document.getElementById('crmStatTotal');
     const crmStatActive = document.getElementById('crmStatActive');
     const crmStatHot = document.getElementById('crmStatHot');
     const crmStatDormant = document.getElementById('crmStatDormant');
     const crmStatLTV = document.getElementById('crmStatLTV');
 
-    // CRM State Data (Sistem fallback LocalStorage)
+    // Default Fallback offline
     const defaultCustomers = [
-        { id: "cust-1", name: "Sarah Connor", phone: "6281234567890", tags: "VIP Customer, Hot Lead", transactions: 9500000, source: "Instagram", lastActive: "2026-05-20", score: 85 },
-        { id: "cust-2", name: "John Doe", phone: "6281987654321", tags: "Warm Lead", transactions: 1200000, source: "Website Direct", lastActive: "2026-05-15", score: 45 },
-        { id: "cust-3", name: "T-800 Terminator", phone: "6285611223344", tags: "Dormant Customer, Cold Lead", transactions: 0, source: "Referral", lastActive: "2026-04-01", score: 10 }
+        { id: "17b354ca-fa2e-40dc-bc76-d183df592651", name: "Sarah Connor", phone: "6281234567890", tags: "VIP Customer, Hot Lead", transactions: 9500000, source: "Instagram", last_active: "2026-05-20", score: 85 },
+        { id: "e6f4773c-ba32-47ef-bc90-9988ff77ea10", name: "John Doe", phone: "6281987654321", tags: "Warm Lead", transactions: 1200000, source: "Website Direct", last_active: "2026-05-15", score: 45 },
+        { id: "28cfa100-332e-4cf4-90aa-bd88aa33ba21", name: "T-800 Terminator", phone: "6285611223344", tags: "Dormant Customer, Cold Lead", transactions: 0, source: "Referral", last_active: "2026-04-01", score: 10 }
     ];
 
     let crmData = JSON.parse(localStorage.getItem('saved_crm_data')) || defaultCustomers;
-    if (!localStorage.getItem('saved_crm_data')) {
-        localStorage.setItem('saved_crm_data', JSON.stringify(defaultCustomers));
-    }
-
     let activeSegment = "all";
     let selectedCRMIds = [];
     let currentViewingCustomerId = null;
 
-    // --- LOGIKA UTAMA RENDER CRM ---
+    // SINKRONISASI DATABASE SUPABASE DENGAN FALLBACK LOCALSTORAGE [1]
+    async function syncContactsFromSupabase() {
+        if (!supabaseClient) {
+            renderCRM();
+            return;
+        }
+
+        try {
+            // Ambil session user aktif agar data RLS terfilter sesuai pemilik [1]
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                renderCRM();
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from('contacts') // Menembak tabel contacts di ERD Anda [1]
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                crmData = data;
+                localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
+            }
+        } catch (err) {
+            console.warn("Gagal fetch dari Supabase, memuat cadangan lokal:", err);
+        } finally {
+            renderCRM();
+        }
+    }
+
     function renderCRM() {
         if (!crmTableBody || !crmEmptyState || !crmTableContainer) return;
 
-        // Filter berdasarkan Segment
         let filtered = crmData;
         if (activeSegment === 'vip') {
             filtered = crmData.filter(c => c.transactions > 5000000);
@@ -234,13 +254,12 @@ document.addEventListener('DOMContentLoaded', () => {
             filtered = crmData.filter(c => c.score >= 70);
         } else if (activeSegment === 'dormant') {
             filtered = crmData.filter(c => {
-                const diffTime = Math.abs(new Date() - new Date(c.lastActive));
+                const diffTime = Math.abs(new Date() - new Date(c.last_active || c.lastActive));
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 return diffDays > 30;
             });
         }
 
-        // Filter berdasarkan Realtime Search
         const searchVal = crmSearch.value.trim().toLowerCase();
         if (searchVal) {
             filtered = filtered.filter(c => 
@@ -251,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
 
-        // Tampilkan Empty State jika kosong
         if (filtered.length === 0) {
             crmTableContainer.classList.add('hidden');
             crmEmptyState.classList.remove('hidden');
@@ -266,8 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isChecked = selectedCRMIds.includes(cust.id);
             const scoreColor = cust.score >= 70 ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20' : cust.score >= 40 ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/20' : 'text-zinc-500 bg-zinc-50 dark:bg-zinc-800/40';
             
-            // Aturan Auto Tagging
-            let autoTags = cust.tags.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            let autoTags = (cust.tags || '').split(',').map(t => t.trim()).filter(t => t.length > 0);
             if (cust.transactions > 5000000 && !autoTags.includes('VIP')) autoTags.push('VIP');
             
             const tr = document.createElement('tr');
@@ -288,11 +305,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </td>
                 <td class="px-6 py-4 col-score">
-                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg ${scoreColor}">${cust.score} Poin</span>
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg ${scoreColor}">${cust.score || 40} Poin</span>
                 </td>
-                <td class="px-6 py-4 col-ltv font-medium text-indigo-500">${formatRupiah(cust.transactions)}</td>
-                <td class="px-6 py-4 col-source text-zinc-500 text-xs">${cust.source}</td>
-                <td class="px-6 py-4 col-activity text-zinc-500 text-xs">${cust.lastActive}</td>
+                <td class="px-6 py-4 col-ltv font-medium text-indigo-500">${formatRupiah(cust.transactions || 0)}</td>
+                <td class="px-6 py-4 col-source text-zinc-500 text-xs">${cust.source || 'Manual'}</td>
+                <td class="px-6 py-4 col-activity text-zinc-500 text-xs">${cust.last_active || cust.lastActive || 'Hari Ini'}</td>
                 <td class="px-6 py-4 text-right" onclick="event.stopPropagation()">
                     <div class="flex items-center justify-end gap-2">
                         <button class="btn-quick-wa text-zinc-400 hover:text-emerald-500 transition-colors text-lg" data-phone="${cust.phone}"><i class="ph ph-whatsapp-logo"></i></button>
@@ -302,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
             `;
 
-            // Buka Drawer Detail saat Baris Klik
             tr.addEventListener('click', () => {
                 openCustomerDrawer(cust.id);
             });
@@ -310,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
             crmTableBody.appendChild(tr);
         });
 
-        // Event listener dinamis checkbox baris
+        // Event listener row actions
         document.querySelectorAll('.chk-row').forEach(chk => {
             chk.addEventListener('change', (e) => {
                 const id = e.target.getAttribute('data-id');
@@ -323,7 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Event listener Quick Action WA
         document.querySelectorAll('.btn-quick-wa').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const phone = e.currentTarget.getAttribute('data-phone');
@@ -331,7 +346,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Event listener Edit Customer
         document.querySelectorAll('.btn-edit-cust').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
@@ -339,19 +353,24 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Event listener Hapus Customer
         document.querySelectorAll('.btn-delete-cust').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
                 const result = await Swal.fire({
                     title: 'Hapus customer?',
-                    text: 'Seluruh riwayat catatan dan timeline akan terhapus permanen.',
+                    text: 'Seluruh riwayat catatan dan timeline akan terhapus.',
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33'
                 });
 
                 if (result.isConfirmed) {
+                    try {
+                        if (supabaseClient) {
+                            await supabaseClient.from('contacts').delete().eq('id', id); // Sync delete Supabase [1]
+                        }
+                    } catch (e) { console.error(e); }
+
                     crmData = crmData.filter(x => x.id !== id);
                     localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
                     renderCRM();
@@ -387,16 +406,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- REALTIME CUSTOMER ANALYTICS & BADGES ---
+    // --- ANALYTICS BAR COUNTER ---
     function updateCRMAnalytics() {
         if (!crmStatTotal) return;
 
         const total = crmData.length;
-        const active = crmData.filter(c => c.score >= 50).length;
-        const hot = crmData.filter(c => c.score >= 70).length;
+        const active = crmData.filter(c => (c.score || 40) >= 50).length;
+        const hot = crmData.filter(c => (c.score || 40) >= 70).length;
         
         const dormant = crmData.filter(c => {
-            const diffTime = Math.abs(new Date() - new Date(c.lastActive));
+            const diffTime = Math.abs(new Date() - new Date(c.last_active || c.lastActive));
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             return diffDays > 30;
         }).length;
@@ -409,14 +428,13 @@ document.addEventListener('DOMContentLoaded', () => {
         crmStatDormant.textContent = dormant;
         crmStatLTV.textContent = formatRupiah(totalLtv);
 
-        // Update Badges di Sidebar
         if (badgeSegAll) badgeSegAll.textContent = total;
         if (badgeSegVip) badgeSegVip.textContent = crmData.filter(c => c.transactions > 5000000).length;
         if (badgeSegHot) badgeSegHot.textContent = hot;
         if (badgeSegDormant) badgeSegDormant.textContent = dormant;
     }
 
-    // --- STICKY BULK ACTIONS TOOLBAR LOGIC ---
+    // --- STICKY BULK ACTIONS TOOLBAR ---
     if (chkSelectAllCRM) {
         chkSelectAllCRM.addEventListener('change', (e) => {
             if (e.target.checked) {
@@ -443,18 +461,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Bulk Delete
     const btnBulkDelete = document.getElementById('btnBulkDelete');
     if (btnBulkDelete) {
         btnBulkDelete.addEventListener('click', async () => {
             const result = await Swal.fire({
-                title: `Hapus ${selectedCRMIds.length} kontak?`,
+                title: `Hapus ${selectedCRMIds.length} kontak terpilih?`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33'
             });
 
             if (result.isConfirmed) {
+                try {
+                    if (supabaseClient) {
+                        // Bulk delete di Supabase
+                        await supabaseClient.from('contacts').delete().in('id', selectedCRMIds); [1]
+                    }
+                } catch (e) { console.error(e); }
+
                 crmData = crmData.filter(c => !selectedCRMIds.includes(c.id));
                 localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
                 selectedCRMIds = [];
@@ -465,26 +489,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Bulk Blast (Pindahkan nomor target langsung ke panel WA Blast)
     const btnBulkBlast = document.getElementById('btnBulkBlast');
     if (btnBulkBlast) {
         btnBulkBlast.addEventListener('click', () => {
             const targetList = crmData.filter(c => selectedCRMIds.includes(c.id)).map(c => c.phone).join(', ');
             
-            // Pindahkan ke panel WA Blast
             document.querySelector('[data-target="blast"]').click();
             document.getElementById('targetNumbers').value = targetList;
-            // Trigger input event to update numbers counter
             document.getElementById('targetNumbers').dispatchEvent(new Event('input'));
 
-            // Clear selections
             selectedCRMIds = [];
             updateBulkToolbar();
             renderCRM();
         });
     }
 
-    // --- COLOUMN CUSTOMIZATION POPULARITY ---
+    // --- COLUMN CUSTOMIZATION ---
     const btnToggleColumns = document.getElementById('btnToggleColumns');
     const columnSelectorPopover = document.getElementById('columnSelectorPopover');
 
@@ -517,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- PRO EXPORT EXCEL/CSV ---
+    // --- PRO EXPORT EXCEL ---
     const btnExportMenu = document.getElementById('btnExportMenu');
     if (btnExportMenu) {
         btnExportMenu.addEventListener('click', () => {
@@ -529,7 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- SMART IMPORT CSV/EXCEL (DENGAN DETEKSI DUPLIKAT & MERGE) ---
+    // --- SMART IMPORT CSV/EXCEL (DENGAN SINKRON SUPABASE) ---
     const importCRMExcel = document.getElementById('importCRMExcel');
     if (importCRMExcel) {
         importCRMExcel.addEventListener('change', (e) => {
@@ -546,7 +566,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 let addedCount = 0;
                 let mergedCount = 0;
 
-                rawImported.forEach(row => {
+                // Dapatkan auth user ID saat ini [1]
+                let userId = null;
+                if (supabaseClient) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) userId = session.user.id;
+                }
+
+                for (const row of rawImported) {
                     const cleanPhone = String(row.phone || row.Phone || '').trim();
                     const cleanName = String(row.name || row.Name || 'Tanpa Nama').trim();
                     const cleanTags = String(row.tags || row.Tags || 'Imported').trim();
@@ -554,30 +581,46 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cleanSource = String(row.source || row.Source || 'Import').trim();
 
                     if (cleanPhone) {
-                        // Cek Duplikat Nomor WA
                         const existingIdx = crmData.findIndex(x => x.phone === cleanPhone);
                         if (existingIdx !== -1) {
-                            // Merge Data Transaksi / CLV & Tambah Tag
+                            // Merge
                             crmData[existingIdx].transactions += cleanLTV;
                             crmData[existingIdx].tags += `, ${cleanTags}`;
-                            crmData[existingIdx].score = Math.min(crmData[existingIdx].score + 10, 100);
+                            crmData[existingIdx].score = Math.min((crmData[existingIdx].score || 40) + 10, 100);
+                            
+                            if (supabaseClient) {
+                                await supabaseClient.from('contacts').update({
+                                    transactions: crmData[existingIdx].transactions,
+                                    tags: crmData[existingIdx].tags,
+                                    score: crmData[existingIdx].score
+                                }).eq('id', crmData[existingIdx].id); [1]
+                            }
                             mergedCount++;
                         } else {
-                            // Masukkan Baru
-                            crmData.push({
-                                id: 'cust-' + Date.now() + Math.random().toString(36).substr(2, 5),
+                            // Insert Baru
+                            const newId = 'cust-' + Date.now() + Math.random().toString(36).substr(2, 5);
+                            const newContact = {
+                                id: supabaseClient ? undefined : newId, // UUID generate jika pakai Supabase
                                 name: cleanName,
                                 phone: cleanPhone,
                                 tags: cleanTags,
                                 transactions: cleanLTV,
                                 source: cleanSource,
-                                lastActive: new Date().toISOString().split('T')[0],
-                                score: 50
-                            });
+                                last_active: new Date().toISOString().split('T')[0],
+                                score: 50,
+                                user_id: userId // Inject user_id agar sesuai RLS [1]
+                            };
+
+                            if (supabaseClient) {
+                                const { data: dbData } = await supabaseClient.from('contacts').insert([newContact]).select(); [1]
+                                if (dbData && dbData[0]) crmData.push(dbData[0]);
+                            } else {
+                                crmData.push({ ...newContact, id: newId });
+                            }
                             addedCount++;
                         }
                     }
-                });
+                }
 
                 localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
                 renderCRM();
@@ -585,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Swal.fire({
                     icon: 'success',
                     title: 'Smart Import Berhasil!',
-                    text: `Berhasil menambahkan ${addedCount} kontak baru dan merge ${mergedCount} kontak duplikat.`,
+                    text: `Menambahkan ${addedCount} kontak baru dan merge ${mergedCount} kontak duplikat.`,
                     confirmButtonColor: '#18181b'
                 });
             };
@@ -593,26 +636,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NOTION-STYLE DETAIL DRAWER LOGIC ---
-    function openCustomerDrawer(id) {
+    // --- NOTION-STYLE DETAIL DRAWER LOGIC (SINKRON CATATAN) ---
+    async function openCustomerDrawer(id) {
         if (!customerDrawer) return;
         currentViewingCustomerId = id;
 
         const cust = crmData.find(x => x.id === id);
         if (!cust) return;
 
-        // Populate Drawer Info
         drawerAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(cust.name)}&background=random`;
         drawerName.textContent = cust.name;
         drawerPhone.textContent = cust.phone;
-        drawerLTV.textContent = formatRupiah(cust.transactions);
-        drawerScore.textContent = `${cust.score} Poin`;
+        drawerLTV.textContent = formatRupiah(cust.transactions || 0);
+        drawerScore.textContent = `${cust.score || 40} Poin`;
 
-        // Update Score Badge Kategori
-        if (cust.score >= 70) {
+        if ((cust.score || 40) >= 70) {
             drawerScoreBadge.textContent = "Hot Lead";
             drawerScoreBadge.className = "text-[9px] font-semibold bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded";
-        } else if (cust.score >= 40) {
+        } else if ((cust.score || 40) >= 40) {
             drawerScoreBadge.textContent = "Warm Lead";
             drawerScoreBadge.className = "text-[9px] font-semibold bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded";
         } else {
@@ -620,10 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
             drawerScoreBadge.className = "text-[9px] font-semibold bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded";
         }
 
-        // Render Timeline
-        renderTimeline(cust);
-
-        // Slide In Drawer Panel
+        await renderTimeline(cust);
         customerDrawer.classList.remove('translate-x-full');
     }
 
@@ -634,22 +672,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeCustomerDrawer);
 
-    // --- TIMELINE ACTIVITIES & NOTES LOGIC ---
-    function renderTimeline(cust) {
+    // --- RENDERING TIMELINE DARI SUPABASE / LOCALSTORAGE ---
+    async function renderTimeline(cust) {
         if (!drawerTimeline) return;
         drawerTimeline.innerHTML = '';
 
-        // Ambil list catatan internal
-        const notesKey = `notes_${cust.id}`;
-        const savedNotes = JSON.parse(localStorage.getItem(notesKey)) || [
-            { date: cust.lastActive, content: `Customer berhasil ditambahkan ke sistem via ${cust.source}.` }
-        ];
+        let savedNotes = [];
+
+        // Ambil catatan dari Supabase jika online [1]
+        if (supabaseClient) {
+            try {
+                const { data } = await supabaseClient
+                    .from('customer_notes')
+                    .select('*')
+                    .eq('contact_id', cust.id)
+                    .order('created_at', { ascending: false });
+                if (data) {
+                    savedNotes = data.map(x => ({ date: x.created_at.split('T')[0], content: x.content }));
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        // Fallback local storage jika catatan Supabase kosong
+        if (savedNotes.length === 0) {
+            const notesKey = `notes_${cust.id}`;
+            savedNotes = JSON.parse(localStorage.getItem(notesKey)) || [
+                { date: cust.last_active || '2026-05-24', content: `Customer berhasil ditambahkan ke sistem via ${cust.source || 'Manual'}.` }
+            ];
+        }
 
         savedNotes.forEach(note => {
             const div = document.createElement('div');
             div.className = "relative pl-1";
             div.innerHTML = `
-                <div class="absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-zinc-900 border-2 border-zinc-900 dark:border-white shrink-0"></div>
+                <div class="absolute -left-[22px] top-1.5 w-3 h-3 rounded-full bg-white dark:bg-zinc-900 border-2 border-zinc-900 dark:border-white shrink-0"></div>
                 <div class="space-y-1">
                     <span class="text-[10px] text-zinc-400 font-semibold block leading-none">${note.date}</span>
                     <p class="text-xs text-zinc-700 dark:text-zinc-300 font-medium">${note.content}</p>
@@ -660,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (btnSaveDrawerNote) {
-        btnSaveDrawerNote.addEventListener('click', () => {
+        btnSaveDrawerNote.addEventListener('click', async () => {
             const noteText = drawerNoteInput.value.trim();
             const reminderTime = drawerReminderTime.value;
 
@@ -669,23 +725,48 @@ document.addEventListener('DOMContentLoaded', () => {
             const custIdx = crmData.findIndex(x => x.id === currentViewingCustomerId);
             if (custIdx === -1) return;
 
-            // Tambah Poin Peminatan (+10 Poin jika Admin memberi catatan/follow-up)
-            crmData[currentViewingCustomerId ? crmData.findIndex(x => x.id === currentViewingCustomerId) : -1].score = Math.min(crmData[custIdx].score + 10, 100);
+            // Naikkan Lead Score (+10 Poin)
+            crmData[custIdx].score = Math.min((crmData[custIdx].score || 40) + 10, 100);
 
+            // Simpan catatan baru ke Supabase jika online [1]
+            let userId = null;
+            if (supabaseClient) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) userId = session.user.id;
+
+                // Simpan Note ke Database Supabase [1]
+                if (noteText) {
+                    await supabaseClient.from('customer_notes').insert([{
+                        contact_id: currentViewingCustomerId,
+                        user_id: userId,
+                        content: noteText
+                    }]); [1]
+                }
+
+                // Simpan Reminder ke Database Supabase [1]
+                if (reminderTime) {
+                    await supabaseClient.from('follow_up_reminders').insert([{
+                        contact_id: currentViewingCustomerId,
+                        user_id: userId,
+                        reminder_time: reminderTime
+                    }]); [1]
+                }
+
+                // Update score kontak di Supabase [1]
+                await supabaseClient.from('contacts').update({ score: crmData[custIdx].score }).eq('id', currentViewingCustomerId); [1]
+            }
+
+            // Sync Lokal Fallback
             const notesKey = `notes_${currentViewingCustomerId}`;
             const savedNotes = JSON.parse(localStorage.getItem(notesKey)) || [
-                { date: crmData[custIdx].lastActive, content: `Customer berhasil ditambahkan ke sistem via ${crmData[custIdx].source}.` }
+                { date: crmData[custIdx].last_active || '2026-05-24', content: `Customer berhasil ditambahkan ke sistem.` }
             ];
 
             const today = new Date().toISOString().split('T')[0];
-            
-            if (noteText) {
-                savedNotes.unshift({ date: today, content: noteText });
-            }
-
+            if (noteText) savedNotes.unshift({ date: today, content: noteText });
             if (reminderTime) {
-                savedNotes.unshift({ date: today, content: `🔔 Jadwal Pengingat Follow-Up diset: ${reminderTime.replace('T', ' ')}` });
-                Swal.fire('Reminder Jadwal!', 'Reminder follow-up WhatsApp telah dijadwalkan.', 'success');
+                savedNotes.unshift({ date: today, content: `🔔 Reminder Follow-Up diset: ${reminderTime.replace('T', ' ')}` });
+                Swal.fire('Reminder Jadwal!', 'Jadwal pengingat berhasil dibuat.', 'success');
             }
 
             localStorage.setItem(notesKey, JSON.stringify(savedNotes));
@@ -694,8 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
             drawerNoteInput.value = '';
             drawerReminderTime.value = '';
 
-            // Update UI
-            renderTimeline(crmData[custIdx]);
+            await renderTimeline(crmData[custIdx]);
             renderCRM();
             openCustomerDrawer(currentViewingCustomerId);
         });
@@ -707,7 +787,6 @@ document.addEventListener('DOMContentLoaded', () => {
         customerModal.classList.remove('hidden');
 
         if (id) {
-            // Edit Mode
             const cust = crmData.find(x => x.id === id);
             if (cust) {
                 document.getElementById('custModalTitle').innerText = "Edit Detail Customer";
@@ -716,10 +795,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('custPhone').value = cust.phone;
                 document.getElementById('custTags').value = cust.tags;
                 document.getElementById('custTransactions').value = cust.transactions;
-                document.getElementById('custSource').value = cust.source;
+                document.getElementById('custSource').value = cust.source || 'Manual';
             }
         } else {
-            // Tambah Baru
             document.getElementById('custModalTitle').innerText = "Tambah Customer Baru";
             customerForm.reset();
             document.getElementById('custIndex').value = '';
@@ -742,7 +820,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (custPhone) {
         custPhone.addEventListener('input', () => {
             const raw = custPhone.value.trim();
-            // Aturan validasi (Harus mengandung angka saja, panjang 9-14 karakter)
             const isValid = /^[0-9]{9,15}$/.test(raw) && (raw.startsWith('08') || raw.startsWith('628'));
             if (!isValid && raw.length > 0) {
                 waValidationWarning.classList.remove('hidden');
@@ -761,9 +838,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const phone = document.getElementById('custPhone').value.trim();
             const tags = document.getElementById('custTags').value.trim();
             const transactions = parseInt(document.getElementById('custTransactions').value) || 0;
-            const source = document.getElementById('custSource').value.trim() || 'Manual Input';
+            const source = document.getElementById('custSource').value.trim() || 'Manual';
 
-            // Deteksi Duplikat Nomor (Kecuali sedang mengedit kontak tersebut)
+            let userId = null;
+            if (supabaseClient) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) userId = session.user.id;
+            }
+
+            // Deteksi Duplikat Nomor
             const isDuplicate = crmData.some(x => x.phone === phone && x.id !== id);
             if (isDuplicate) {
                 const confirmMerge = await Swal.fire({
@@ -779,31 +862,51 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetIdx = crmData.findIndex(x => x.phone === phone);
                     crmData[targetIdx].transactions += transactions;
                     crmData[targetIdx].tags += `, ${tags}`;
-                    crmData[targetIdx].score = Math.min(crmData[targetIdx].score + 15, 100);
+                    crmData[targetIdx].score = Math.min((crmData[targetIdx].score || 40) + 15, 100);
+                    
+                    if (supabaseClient) {
+                        // Gabungkan di Supabase [1]
+                        await supabaseClient.from('contacts').update({
+                            transactions: crmData[targetIdx].transactions,
+                            tags: crmData[targetIdx].tags,
+                            score: crmData[targetIdx].score
+                        }).eq('id', crmData[targetIdx].id); [1]
+                    }
+
                     localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
                     renderCRM();
                     closeCustomerModal();
-                    Swal.fire('Data Digabungkan!', 'Transaksi berhasil ditambahkan ke kontak yang ada.', 'success');
+                    Swal.fire('Data Digabungkan!', 'Transaksi berhasil digabungkan.', 'success');
                 }
                 return;
             }
 
             if (id) {
-                // Update
-                crmData = crmData.map(c => c.id === id ? { id, name, phone, tags, transactions, source, lastActive: c.lastActive, score: c.score } : c);
+                // Update ke Supabase / Lokal
+                if (supabaseClient) {
+                    await supabaseClient.from('contacts').update({ name, phone, tags, transactions, source }).eq('id', id); [1]
+                }
+                crmData = crmData.map(c => c.id === id ? { id, name, phone, tags, transactions, source, last_active: c.last_active, score: c.score } : c);
             } else {
                 // Tambah baru
-                const newId = 'cust-' + Date.now();
-                crmData.push({
-                    id: newId,
+                const newContact = {
                     name,
                     phone,
                     tags,
                     transactions,
                     source,
-                    lastActive: new Date().toISOString().split('T')[0],
-                    score: 40 // Default Score Poin hangat
-                });
+                    score: 40,
+                    last_active: new Date().toISOString().split('T')[0],
+                    user_id: userId // Sesuai RLS ERD Anda [1]
+                };
+
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient.from('contacts').insert([newContact]).select(); [1]
+                    if (data && data[0]) crmData.push(data[0]);
+                } else {
+                    const newId = 'cust-' + Date.now();
+                    crmData.push({ ...newContact, id: newId });
+                }
             }
 
             localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
@@ -821,15 +924,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Jalankan sistem CRM
-    renderCRM();
+    // Jalankan Sinkronisasi dari Supabase saat startup [1]
+    syncContactsFromSupabase();
 
-    // --- CORE LOGIKA TEMPLATE SINKRONISASI DAN ANTI BAN TETAP DISATUKAN DI SINI ---
-    // --- (Semua kode dari sub-modul WA Blast Anti-ban sebelumnya tetap aman berjalan di sini) ---
     // ==========================================
     // MODULE: ADVANCED ANTI-BAN ENGINE LOGIC
     // ==========================================
-    
     const variationContainer = document.getElementById('variationInputsContainer');
     const btnAddNewVariation = document.getElementById('btnAddNewVariation');
     const spamWarningBox = document.getElementById('spamWarningBox');
@@ -1024,7 +1124,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateDeviceHealth(status) {
         if (!deviceHealthWidget) return;
 
-        // Reset classes
         deviceHealthWidget.className = "flex items-center justify-between p-4 border rounded-xl transition-all ";
         deviceHealthPing.className = "w-3 h-3 rounded-full animate-ping shrink-0 ";
 
@@ -1064,7 +1163,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     // ==========================================
     // MODULE: CORE QUEUE CAMPAIGN RUNNER (ANTI-BAN)
     // ==========================================
@@ -1096,14 +1194,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Parse targets to Array
             const targets = rawTargets.split(',').map(n => n.trim()).filter(n => n.length > 0);
             if (targets.length === 0) {
                 Swal.fire('Perhatian', 'Tidak ditemukan nomor target valid!', 'warning');
                 return;
             }
 
-            // Get Message Variations
             const variations = Array.from(document.querySelectorAll('.tpl-rotation-input'))
                                     .map(textarea => textarea.value.trim())
                                     .filter(val => val.length > 0);
@@ -1113,7 +1209,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Confirmation Campaign Launch
             const confirmRun = await Swal.fire({
                 title: 'Jalankan Campaign Anti-Ban?',
                 text: `Sistem akan mengirim pesan ke ${targets.length} nomor dengan parameter acak secara bergantian.`,
@@ -1125,13 +1220,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!confirmRun.isConfirmed) return;
 
-            // UI Init Queue Monitor
             liveQueueBox.classList.remove('hidden');
             btnSendBlastPremium.disabled = true;
             btnSendBlastPremium.className = "w-full py-3.5 bg-rose-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2";
             btnSendBlastPremium.innerHTML = '<i class="ph ph-stop"></i> Batalkan / Hentikan Campaign';
 
-            // Reset Stats Counters
             let success = 0;
             let failed = 0;
             statSuccessCount.textContent = '0';
@@ -1141,7 +1234,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             cancelCampaign = false;
 
-            // Get Input Configuration Values
             const minDelay = parseInt(minDelayInput.value) || 15;
             const maxDelay = parseInt(maxDelayInput.value) || 30;
             const batchSize = parseInt(batchSizeInput.value) || 10;
@@ -1150,10 +1242,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const chkGreeting = document.getElementById('chkRandomGreeting').checked;
             const chkEmoji = document.getElementById('chkRandomEmoji').checked;
 
-            // Tampilkan rata-rata delay di statistik
             statAvgDelay.textContent = `${Math.round((minDelay + maxDelay) / 2)}s`;
 
-            // --- RUN BLAST QUEUE LOOP ---
             for (let i = 0; i < targets.length; i++) {
                 if (cancelCampaign) {
                     Swal.fire('Dibatalkan', 'Campaign berhasil dihentikan oleh pengguna.', 'info');
@@ -1163,27 +1253,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const currentTarget = targets[i];
                 queueSimulationText.innerHTML = `<i class="ph ph-sparkle text-indigo-500 animate-spin"></i> Mempersiapkan pesan ke ${currentTarget}...`;
 
-                // 1. Template Rotation (Pilih Template secara acak)
                 const randomTplIndex = Math.floor(Math.random() * variations.length);
                 let baseMessage = variations[randomTplIndex];
 
-                // 2. Modifikasi Sapaan Acak (Random Greeting)
                 if (chkGreeting) {
                     const randomGreet = greetings[Math.floor(Math.random() * greetings.length)];
                     baseMessage = `${randomGreet}\n\n${baseMessage}`;
                 }
 
-                // 3. Modifikasi Emoji Acak (Random Emoji)
                 if (chkEmoji) {
                     const randomEmoji = randomEmojis[Math.floor(Math.random() * randomEmojis.length)];
                     baseMessage = `${baseMessage} ${randomEmoji}`;
                 }
 
-                // 4. Human Simulation Mode: Typing Status Delay Simulation (2-4 detik)
                 queueSimulationText.innerHTML = `<i class="ph ph-keyboard text-indigo-500 animate-pulse"></i> Mengetik pesan untuk ${currentTarget}...`;
                 await new Promise(resolve => setTimeout(resolve, 2500));
 
-                // 5. Send Process (Fonnte Fetch API)
                 const payload = new URLSearchParams();
                 payload.append('target', currentTarget);
                 payload.append('message', baseMessage);
@@ -1208,19 +1293,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     statFailedCount.textContent = failed;
                 }
 
-                // Update Progress bar & labels
                 const processedCount = i + 1;
                 const progressPct = Math.round((processedCount / targets.length) * 100);
                 queueProgressBar.style.width = `${progressPct}%`;
                 queueProgressBadge.textContent = `${processedCount} / ${targets.length}`;
 
-                // Sisa Antrean Terakhir
                 if (processedCount === targets.length) {
                     queueSimulationText.innerHTML = `<i class="ph ph-check-circle text-emerald-500"></i> Selesai! Campaign berhasil dikirim.`;
                     break;
                 }
 
-                // 6. Batch Sending Pause System (Setiap X pesan dikirim, jeda Y menit)
                 if (processedCount % batchSize === 0) {
                     queueSimulationText.innerHTML = `<i class="ph ph-pause-circle text-amber-500 animate-pulse"></i> Jeda Batch aktif... Menunggu ${batchPause} menit sebelum batch baru.`;
                     
@@ -1231,10 +1313,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         secondsLeft--;
                     }
-                    continue; // Skip normal delay if batch pause was processed
+                    continue; 
                 }
 
-                // 7. Smart Random Delay System (Antar Pesan Tunggal)
                 const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
                 let countdown = randomDelay;
                 
@@ -1247,7 +1328,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Reset Button to Default State
             btnSendBlastPremium.disabled = false;
             btnSendBlastPremium.className = "w-full py-3.5 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 text-sm font-semibold rounded-xl shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2";
             btnSendBlastPremium.innerHTML = '<i class="ph ph-rocket-launch"></i> Jalankan Anti-Ban Blast Campaign';
@@ -1263,7 +1343,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Listener Stop Campaign Button
     document.addEventListener('click', (e) => {
         if (e.target && e.target.id === 'btnSendBlast' && btnSendBlastPremium.disabled === true) {
             cancelCampaign = true;
