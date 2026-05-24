@@ -1,7 +1,7 @@
-console.log("Sistem CRM Premium & WA Blast Engine v3.0 aktif...");
+console.log("Sistem CRM Premium & WA Blast Engine v3.1 aktif...");
 
 // ==========================================
-// 1. INISIALISASI SUPABASE (DIAMANKAN DARI TABRAKAN VARIABEL GLOBAL)
+// 1. INISIALISASI SUPABASE (FAILSAFE VARIABLE BINDING)
 // ==========================================
 const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
@@ -19,7 +19,7 @@ try {
     console.error("Gagal menginisialisasi Supabase:", error);
 }
 
-// Fungsi Proteksi: Tendang ke halaman login jika tidak memiliki sesi
+// Fungsi Proteksi: Verifikasi status login aktif
 async function checkAuth() {
     if (!supabaseClient) return;
     try {
@@ -44,6 +44,60 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Siap. Menjalankan modul...");
 
     const html = document.documentElement;
+
+    // --- DEKLARASI EXPLICIT SEMUA ELEMENT DOM (MENCEGAH REFERENCE ERROR) ---
+    const templatesGrid = document.getElementById('templatesGrid');
+    const templateEmptyState = document.getElementById('templateEmptyState');
+    const blastTemplateSelect = document.getElementById('blastTemplateSelect');
+    const templateModal = document.getElementById('templateModal');
+    const templateForm = document.getElementById('templateForm');
+    const btnOpenTemplateModal = document.getElementById('btnOpenTemplateModal');
+    const btnCloseTemplateModal = document.getElementById('btnCloseTemplateModal');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const templateIdInput = document.getElementById('templateId');
+    const tplTitleInput = document.getElementById('tplTitle');
+    const tplCategoryInput = document.getElementById('tplCategory');
+    const tplContentInput = document.getElementById('tplContent');
+
+    const crmTableBody = document.getElementById('crmTableBody');
+    const crmEmptyState = document.getElementById('crmEmptyState');
+    const crmTableContainer = document.getElementById('crmTableContainer');
+    const crmSearch = document.getElementById('crmSearch');
+    const stickyBulkToolbar = document.getElementById('stickyBulkToolbar');
+    const txtBulkSelectedCount = document.getElementById('txtBulkSelectedCount');
+    const chkSelectAllCRM = document.getElementById('chkSelectAllCRM');
+
+    const customerModal = document.getElementById('customerModal');
+    const customerForm = document.getElementById('customerForm');
+    const btnAddCustomer = document.getElementById('btnAddCustomer');
+    const btnCloseCustModal = document.getElementById('btnCloseCustModal');
+    const custModalBackdrop = document.getElementById('custModalBackdrop');
+    const waValidationWarning = document.getElementById('waValidationWarning');
+
+    const customerDrawer = document.getElementById('customerDrawer');
+    const btnCloseDrawer = document.getElementById('btnCloseDrawer');
+    const drawerAvatar = document.getElementById('drawerAvatar');
+    const drawerName = document.getElementById('drawerName');
+    const drawerPhone = document.getElementById('drawerPhone');
+    const drawerLTV = document.getElementById('drawerLTV');
+    const drawerScore = document.getElementById('drawerScore');
+    const drawerScoreBadge = document.getElementById('drawerScoreBadge');
+    const drawerNoteInput = document.getElementById('drawerNoteInput');
+    const drawerReminderTime = document.getElementById('drawerReminderTime');
+    const btnSaveDrawerNote = document.getElementById('btnSaveDrawerNote');
+    const drawerTimeline = document.getElementById('drawerTimeline');
+
+    const badgeSegAll = document.getElementById('badgeSegAll');
+    const badgeSegVip = document.getElementById('badgeSegVip');
+    const badgeSegHot = document.getElementById('badgeSegHot');
+    const badgeSegDormant = document.getElementById('badgeSegDormant');
+
+    const crmStatTotal = document.getElementById('crmStatTotal');
+    const crmStatActive = document.getElementById('crmStatActive');
+    const crmStatHot = document.getElementById('crmStatHot');
+    const crmStatDormant = document.getElementById('crmStatDormant');
+    const crmStatLTV = document.getElementById('crmStatLTV');
+    const homeTotalContacts = document.getElementById('homeTotalContacts');
 
     // --- A. FUNGSI LOGOUT ---
     const logoutBtn = document.getElementById('logoutBtn');
@@ -126,9 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- D. INITIALIZE GRAFIK CHART.JS ---
-    const ctx = document.getElementById('activityChart');
-    if (ctx && typeof Chart !== 'undefined') {
-        new Chart(ctx, {
+    const chartCanvas = document.getElementById('activityChart');
+    if (chartCanvas && typeof Chart !== 'undefined') {
+        new Chart(chartCanvas, {
             type: 'line',
             data: {
                 labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
@@ -158,50 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // MODULE: ADVANCED CRM CUSTOMER ENGINE (contacts)
+    // MODULE: ADVANCED CRM CUSTOMER ENGINE
     // ==========================================
-    const crmTableBody = document.getElementById('crmTableBody');
-    const crmEmptyState = document.getElementById('crmEmptyState');
-    const crmTableContainer = document.getElementById('crmTableContainer');
-    const crmSearch = document.getElementById('crmSearch');
-    const stickyBulkToolbar = document.getElementById('stickyBulkToolbar');
-    const txtBulkSelectedCount = document.getElementById('txtBulkSelectedCount');
-    const chkSelectAllCRM = document.getElementById('chkSelectAllCRM');
-
-    const customerModal = document.getElementById('customerModal');
-    const customerForm = document.getElementById('customerForm');
-    const btnAddCustomer = document.getElementById('btnAddCustomer');
-    const btnCloseCustModal = document.getElementById('btnCloseCustModal');
-    const custModalBackdrop = document.getElementById('custModalBackdrop');
-    const waValidationWarning = document.getElementById('waValidationWarning');
-
-    const customerDrawer = document.getElementById('customerDrawer');
-    const btnCloseDrawer = document.getElementById('btnCloseDrawer');
-    const drawerAvatar = document.getElementById('drawerAvatar');
-    const drawerName = document.getElementById('drawerName');
-    const drawerPhone = document.getElementById('drawerPhone');
-    const drawerLTV = document.getElementById('drawerLTV');
-    const drawerScore = document.getElementById('drawerScore');
-    const drawerScoreBadge = document.getElementById('drawerScoreBadge');
-    const drawerNoteInput = document.getElementById('drawerNoteInput');
-    const drawerReminderTime = document.getElementById('drawerReminderTime');
-    const btnSaveDrawerNote = document.getElementById('btnSaveDrawerNote');
-    const drawerTimeline = document.getElementById('drawerTimeline');
-
-    const badgeSegAll = document.getElementById('badgeSegAll');
-    const badgeSegVip = document.getElementById('badgeSegVip');
-    const badgeSegHot = document.getElementById('badgeSegHot');
-    const badgeSegDormant = document.getElementById('badgeSegDormant');
-
-    const crmStatTotal = document.getElementById('crmStatTotal');
-    const crmStatActive = document.getElementById('crmStatActive');
-    const crmStatHot = document.getElementById('crmStatHot');
-    const crmStatDormant = document.getElementById('crmStatDormant');
-    const crmStatLTV = document.getElementById('crmStatLTV');
-
-    const homeTotalContacts = document.getElementById('homeTotalContacts');
-
-    // Default Fallback
     const defaultCustomers = [
         { id: "17b354ca-fa2e-40dc-bc76-d183df592651", name: "Sarah Connor", phone: "6281234567890", tags: "VIP Customer, Hot Lead", transactions: 9500000, source: "Instagram", last_active: "2026-05-20", score: 85 },
         { id: "e6f4773c-ba32-47ef-bc90-9988ff77ea10", name: "John Doe", phone: "6281987654321", tags: "Warm Lead", transactions: 1200000, source: "Website Direct", last_active: "2026-05-15", score: 45 },
@@ -213,7 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedCRMIds = [];
     let currentViewingCustomerId = null;
 
-    // SINKRONISASI DATABASE SUPABASE
     async function syncContactsFromSupabase() {
         if (!supabaseClient) {
             renderCRM();
@@ -385,6 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DEBOUNCE SEARCH ---
+    let searchTimeout;
     if (crmSearch) {
         crmSearch.addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -914,23 +926,9 @@ document.addEventListener('DOMContentLoaded', () => {
     syncContactsFromSupabase();
 
     // ==========================================
-    // MODULE: CRUDS TEMPLATE PESAN (DIRESTRUKTURISASI VARIABEL-VARIABELNYA)
+    // MODULE: CRUDS TEMPLATE PESAN
     // ==========================================
-    // PENYEBAB ERROR 'blastTemplateSelect is not defined' DI SINI SUDAH DIPERBAIKI (Variabel dideklarasikan ulang) [1]:
-    const templatesGrid = document.getElementById('templatesGrid');
-    const templateEmptyState = document.getElementById('templateEmptyState');
-    const blastTemplateSelect = document.getElementById('blastTemplateSelect');
-    
-    const templateModal = document.getElementById('templateModal');
-    const templateForm = document.getElementById('templateForm');
-    const btnOpenTemplateModal = document.getElementById('btnOpenTemplateModal');
-    const btnCloseTemplateModal = document.getElementById('btnCloseTemplateModal');
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    
-    const templateIdInput = document.getElementById('templateId');
-    const tplTitleInput = document.getElementById('tplTitle');
-    const tplCategoryInput = document.getElementById('tplCategory');
-    const tplContentInput = document.getElementById('tplContent');
+    let templates = JSON.parse(localStorage.getItem('saved_templates')) || defaultTemplates;
 
     function renderTemplates() {
         if (!templatesGrid || !templateEmptyState) return;
@@ -1104,16 +1102,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // MODULE: ADVANCED ANTI-BAN ENGINE LOGIC
     // ==========================================
-    const variationContainer = document.getElementById('variationInputsContainer');
-    const btnAddNewVariation = document.getElementById('btnAddNewVariation');
-    const spamWarningBox = document.getElementById('spamWarningBox');
-    const targetNumbersInput = document.getElementById('targetNumbers');
-    const targetCounter = document.getElementById('targetCounter');
-
-    const spamKeywords = ['GRATIS!!!', 'CUAN BESAR', 'KLIK SEKARANG', 'SLOT', 'PINJOL', 'PROMO GILA', 'MENANG BANYAK'];
-    const greetings = ["Halo kak 👋", "Hai kak 😊", "Selamat pagi kak ☀️", "Selamat siang kak 👋", "Selamat sore kak ☕", "Sore kak 😊", "Hallo kak ✨"];
-    const randomEmojis = ["👋", "😊", "✨", "🔥", "👍", "☀️", "🙏", "⚡", "🚀"];
-
     if (targetNumbersInput) {
         targetNumbersInput.addEventListener('input', () => {
             const raw = targetNumbersInput.value.trim();
@@ -1126,67 +1114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addVariationInput(initialContent = '') {
-        if (!variationContainer) return;
-        const index = variationContainer.children.length + 1;
-        const div = document.createElement('div');
-        div.className = "relative group flex items-start gap-2 bg-zinc-50 dark:bg-zinc-800/40 p-3.5 rounded-xl border border-zinc-100 dark:border-zinc-800 transition-all";
-        div.innerHTML = `
-            <div class="flex-1">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-semibold text-zinc-400">Variasi Template #${index}</span>
-                    <button type="button" class="btn-remove-variation text-xs text-rose-500 hover:opacity-80 transition-opacity hidden group-hover:block"><i class="ph ph-trash"></i> Hapus</button>
-                </div>
-                <textarea rows="3" class="tpl-rotation-input w-full bg-transparent outline-none text-sm resize-none text-zinc-900 dark:text-white" placeholder="Masukkan variasi pesan lainnya disini...">${initialContent}</textarea>
-            </div>
-        `;
-        variationContainer.appendChild(div);
-
-        const textarea = div.querySelector('.tpl-rotation-input');
-        textarea.addEventListener('input', () => {
-            scanForSpamContent();
-        });
-
-        div.querySelector('.btn-remove-variation').addEventListener('click', () => {
-            if (variationContainer.children.length > 1) {
-                div.remove();
-                reindexVariationLabels();
-                scanForSpamContent();
-            } else {
-                Swal.fire('Oops', 'Harus menyisakan minimal 1 variasi pesan.', 'warning');
-            }
-        });
-    }
-
-    function reindexVariationLabels() {
-        if (!variationContainer) return;
-        Array.from(variationContainer.children).forEach((child, index) => {
-            child.querySelector('span').textContent = `Variasi Template #${index + 1}`;
-        });
-    }
-
-    function scanForSpamContent() {
-        let isSpamFound = false;
-        const textareas = document.querySelectorAll('.tpl-rotation-input');
-        
-        textareas.forEach(textarea => {
-            const text = textarea.value.toUpperCase();
-            spamKeywords.forEach(keyword => {
-                if (text.includes(keyword.toUpperCase())) {
-                    isSpamFound = true;
-                }
-            });
-        });
-
-        if (isSpamFound) {
-            if (spamWarningBox) spamWarningBox.classList.remove('hidden');
-            updateDeviceHealth('warning');
-        } else {
-            if (spamWarningBox) spamWarningBox.classList.add('hidden');
-            updateDeviceHealth('safe');
-        }
-    }
-
+    // Inisialisasi awal variasi template acak
     if (btnAddNewVariation) {
         btnAddNewVariation.addEventListener('click', () => {
             if (variationContainer.children.length < 5) {
@@ -1197,63 +1125,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    addVariationInput("Halo kak, kami ada penawaran menarik khusus hari ini!");
-
     // --- LOGIKA SETTING PRESET ANTI-BAN ---
-    const presetSafe = document.getElementById('btnPresetSafe');
-    const presetNormal = document.getElementById('btnPresetNormal');
-    const presetFast = document.getElementById('btnPresetFast');
-
-    const minDelayInput = document.getElementById('minDelay');
-    const maxDelayInput = document.getElementById('maxDelay');
-    const batchSizeInput = document.getElementById('batchSize');
-    const batchPauseInput = document.getElementById('batchPause');
-    const presetDesc = document.getElementById('presetDescription');
-
-    function selectPreset(mode) {
-        if (!presetSafe) return;
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.classList.remove('active', 'bg-zinc-900', 'text-white', 'dark:bg-white', 'dark:text-zinc-950', 'border-zinc-900', 'dark:border-white');
-            btn.classList.add('border-zinc-200', 'dark:border-zinc-800', 'text-zinc-700', 'dark:text-zinc-300');
-        });
-
-        const activeBtn = document.getElementById(`btnPreset${mode}`);
-        activeBtn.classList.remove('border-zinc-200', 'dark:border-zinc-800', 'text-zinc-700', 'dark:text-zinc-300');
-        activeBtn.classList.add('active', 'bg-zinc-900', 'text-white', 'dark:bg-white', 'dark:text-zinc-950', 'border-zinc-900', 'dark:border-white');
-
-        if (mode === 'Safe') {
-            minDelayInput.value = 30;
-            maxDelayInput.value = 60;
-            batchSizeInput.value = 15;
-            batchPauseInput.value = 3;
-            presetDesc.textContent = "Mode Safe: Delay panjang (30-60 detik) dengan jeda batch ketat. Sangat direkomendasikan.";
-            updateDeviceHealth('safe');
-        } else if (mode === 'Normal') {
-            minDelayInput.value = 15;
-            maxDelayInput.value = 30;
-            batchSizeInput.value = 30;
-            batchPauseInput.value = 2;
-            presetDesc.textContent = "Mode Normal: Kecepatan pengiriman sedang (15-30 detik). Sesuai untuk nomor yang sudah hangat.";
-            updateDeviceHealth('normal');
-        } else if (mode === 'Fast') {
-            minDelayInput.value = 5;
-            maxDelayInput.value = 15;
-            batchSizeInput.value = 50;
-            batchPauseInput.value = 1;
-            presetDesc.textContent = "Mode Fast: Pengiriman cepat (5-15 detik). Memiliki risiko ban sangat tinggi.";
-            updateDeviceHealth('high_risk');
-        }
-    }
-
     if (presetSafe) presetSafe.addEventListener('click', () => selectPreset('Safe'));
     if (presetNormal) presetNormal.addEventListener('click', () => selectPreset('Normal'));
     if (presetFast) presetFast.addEventListener('click', () => selectPreset('Fast'));
 
     // --- DAILY LIMIT SELECTION ---
-    const btnLimitNewNum = document.getElementById('btnLimitNewNum');
-    const btnLimitActiveNum = document.getElementById('btnLimitActiveNum');
-    const txtDailyLimitRec = document.getElementById('txtDailyLimitRec');
-
     if (btnLimitNewNum && btnLimitActiveNum) {
         btnLimitNewNum.addEventListener('click', () => {
             btnLimitNewNum.classList.add('text-zinc-900', 'dark:text-white', 'font-semibold');
@@ -1270,78 +1147,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- DEVICE HEALTH STATUS ---
-    const deviceHealthWidget = document.getElementById('deviceHealthWidget');
-    const deviceHealthIcon = document.getElementById('deviceHealthIcon');
-    const deviceHealthTitle = document.getElementById('deviceHealthTitle');
-    const deviceHealthDesc = document.getElementById('deviceHealthDesc');
-    const deviceHealthPing = document.getElementById('deviceHealthPing');
-    const homeSpamRiskBadge = document.getElementById('homeSpamRiskBadge');
-
-    function updateDeviceHealth(status) {
-        if (!deviceHealthWidget) return;
-
-        deviceHealthWidget.className = "flex items-center justify-between p-4 border rounded-xl transition-all ";
-        deviceHealthPing.className = "w-3 h-3 rounded-full animate-ping shrink-0 ";
-
-        if (status === 'safe') {
-            deviceHealthWidget.classList.add("bg-emerald-50", "dark:bg-emerald-950/20", "border-emerald-100", "dark:border-emerald-900/30");
-            deviceHealthIcon.className = "ph ph-heartbeat text-2xl text-emerald-500";
-            deviceHealthTitle.textContent = "Device Status: AMAN";
-            deviceHealthTitle.className = "text-sm font-semibold text-emerald-800 dark:text-emerald-300";
-            deviceHealthDesc.textContent = "Sistem anti-ban dikonfigurasi optimal.";
-            deviceHealthPing.classList.add("bg-emerald-500");
-            if (homeSpamRiskBadge) {
-                homeSpamRiskBadge.textContent = "SANGAT AMAN";
-                homeSpamRiskBadge.className = "text-xl font-bold tracking-tight text-emerald-500 mt-1";
-            }
-        } else if (status === 'normal') {
-            deviceHealthWidget.classList.add("bg-amber-50", "dark:bg-amber-950/20", "border-amber-100", "dark:border-amber-900/30");
-            deviceHealthIcon.className = "ph ph-shield-warning text-2xl text-amber-500";
-            deviceHealthTitle.textContent = "Device Status: WASPADA";
-            deviceHealthTitle.className = "text-sm font-semibold text-amber-800 dark:text-amber-300";
-            deviceHealthDesc.textContent = "Konfigurasi sedang, pastikan nomor Anda sudah di-warmup.";
-            deviceHealthPing.classList.add("bg-amber-500");
-            if (homeSpamRiskBadge) {
-                homeSpamRiskBadge.textContent = "WASPADA";
-                homeSpamRiskBadge.className = "text-xl font-bold tracking-tight text-amber-500 mt-1";
-            }
-        } else if (status === 'high_risk') {
-            deviceHealthWidget.classList.add("bg-rose-50", "dark:bg-rose-950/20", "border-rose-100", "dark:border-rose-900/30");
-            deviceHealthIcon.className = "ph ph-warning-octagon text-2xl text-rose-500 animate-bounce";
-            deviceHealthTitle.textContent = "Device Status: RISIKO TINGGI";
-            deviceHealthTitle.className = "text-sm font-semibold text-rose-800 dark:text-rose-300";
-            deviceHealthDesc.textContent = "Menggunakan delay cepat! Nomor berisiko terkena ban WhatsApp.";
-            deviceHealthPing.classList.add("bg-rose-500");
-            if (homeSpamRiskBadge) {
-                homeSpamRiskBadge.textContent = "RISIKO TINGGI";
-                homeSpamRiskBadge.className = "text-xl font-bold tracking-tight text-rose-500 mt-1";
-            }
-        }
-    }
-
     // ==========================================
     // MODULE: CORE QUEUE CAMPAIGN RUNNER & HISTORY SYNC
     // ==========================================
-    const btnSendBlastPremium = document.getElementById('btnSendBlast');
-    const liveQueueBox = document.getElementById('liveQueueBox');
-    const queueSimulationText = document.getElementById('queueSimulationText');
-    const queueProgressBadge = document.getElementById('queueProgressBadge');
-    const queueProgressBar = document.getElementById('queueProgressBar');
-    
-    const statSuccessCount = document.getElementById('statSuccessCount');
-    const statFailedCount = document.getElementById('statFailedCount');
-    const statEstTime = document.getElementById('statEstTime');
-    const statAvgDelay = document.getElementById('statAvgDelay');
-
-    const historyTableBody = document.getElementById('historyTableBody');
-    const homeBlastTerkirim = document.getElementById('homeBlastTerkirim');
-
-    let cancelCampaign = false;
-    let localHistory = JSON.parse(localStorage.getItem('saved_blast_history')) || [
-        { date: "2026-05-23 14:30", total: 150, success: 148, failed: 2, delay: "30s - 60s", status: "Success" }
-    ];
-
     async function syncHistoryFromSupabase() {
         if (!supabaseClient || !historyTableBody) {
             renderHistory();
