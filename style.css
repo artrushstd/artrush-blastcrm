@@ -1,0 +1,77 @@
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #d4d4d8;
+    border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+}
+
+/* Base Transitions */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* SPA Sections Transition */
+.view-section {
+    display: none;
+    animation: fadeIn 0.3s ease-out forwards;
+}
+.view-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Active Nav States */
+.nav-item.active {
+    background-color: #f4f4f5;
+    color: #18181b;
+}
+.dark .nav-item.active {
+    background-color: #27272a;
+    color: #ffffff;
+}
+.nav-item.active i {
+    color: #18181b;
+}
+.dark .nav-item.active i {
+    color: #ffffff;
+}
+
+/* Mobile Bottom Nav Active */
+.nav-item.mobile.active {
+    color: #18181b;
+}
+.dark .nav-item.mobile.active {
+    color: #ffffff;
+}
+.nav-item.mobile.active i {
+    font-weight: bold;
+}
+
+/* Empty State Styles */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    text-align: center;
+    color: #71717a;
+    border: 1px dashed #e4e4e7;
+    border-radius: 1rem;
+}
+.dark .empty-state {
+    border-color: #27272a;
+}

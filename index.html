@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WA Blast CRM</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-zinc-50 flex items-center justify-center min-h-screen relative overflow-hidden">
+    <!-- Subtle Background Gradient -->
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-zinc-400/20 rounded-full blur-3xl"></div>
+
+    <div class="w-full max-w-md p-8 bg-white/70 backdrop-blur-xl border border-zinc-200/80 rounded-3xl shadow-xl shadow-zinc-200/50 relative z-10 mx-4">
+        <div class="text-center mb-8">
+            <div class="w-12 h-12 bg-zinc-900 rounded-xl mx-auto flex items-center justify-center mb-4 shadow-md">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-zinc-900">Selamat Datang</h1>
+            <p class="text-sm text-zinc-500 mt-2">Masuk ke dashboard CRM Anda</p>
+        </div>
+
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-1">Email address</label>
+                <input type="email" id="email" required class="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all outline-none" placeholder="anda@perusahaan.com">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-zinc-700 mb-1">Password</label>
+                <input type="password" id="password" required class="w-full px-4 py-3 rounded-xl bg-zinc-50 border border-zinc-200 focus:ring-2 focus:ring-zinc-900 focus:border-transparent transition-all outline-none" placeholder="••••••••">
+            </div>
+            <button type="submit" class="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-medium py-3 rounded-xl transition-all shadow-sm flex justify-center items-center gap-2">
+                Masuk
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase Init (Ganti dengan URL & Key Anda)
+        const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
+        // const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // Mock Login Process (Ganti dengan kode Supabase Auth di atas)
+            Swal.fire({ title: 'Logging in...', text: 'Memverifikasi kredensial', icon: 'info', timer: 1000, showConfirmButton: false });
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - WA Blast CRM</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] }, colors: { brand: '#09090b', brandBg: '#fafafa' } } }
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#fafafa] dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 antialiased overflow-x-hidden">
+
+    <!-- Sidebar Desktop -->
+    <aside class="fixed inset-y-0 left-0 w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 z-50 hidden md:flex flex-col transition-all">
+        <div class="h-16 flex items-center px-6 border-b border-zinc-200 dark:border-zinc-800">
+            <i class="ph ph-paper-plane-tilt text-2xl font-bold mr-2"></i>
+            <span class="font-bold tracking-tight text-lg">WA Blast</span>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
+            <a href="#" data-target="home" class="nav-item active flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-900 bg-zinc-100 dark:bg-zinc-800 dark:text-white">
+                <i class="ph ph-squares-four text-lg mr-3 text-zinc-500"></i> Dashboard
+            </a>
+            <a href="#" data-target="contacts" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50">
+                <i class="ph ph-users text-lg mr-3 text-zinc-500"></i> CRM Kontak
+            </a>
+            <a href="#" data-target="templates" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50">
+                <i class="ph ph-chat-text text-lg mr-3 text-zinc-500"></i> Template Pesan
+            </a>
+            <a href="#" data-target="blast" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50">
+                <i class="ph ph-rocket-launch text-lg mr-3 text-zinc-500"></i> WA Blast
+            </a>
+            <a href="#" data-target="history" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50">
+                <i class="ph ph-clock-counter-clockwise text-lg mr-3 text-zinc-500"></i> Riwayat
+            </a>
+            <div class="pt-6 mt-6 border-t border-zinc-200 dark:border-zinc-800">
+                <a href="#" data-target="settings" class="nav-item flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50">
+                    <i class="ph ph-gear text-lg mr-3 text-zinc-500"></i> Pengaturan
+                </a>
+            </div>
+        </nav>
+        <div class="p-4 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+            <img src="https://ui-avatars.com/api/?name=User+Admin&background=0D8ABC&color=fff" class="w-9 h-9 rounded-full bg-zinc-200">
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate">User Admin</p>
+                <p class="text-xs text-zinc-500 truncate">Pro Plan</p>
+            </div>
+            <button id="logoutBtn" class="text-zinc-400 hover:text-red-500 transition-colors"><i class="ph ph-sign-out text-xl"></i></button>
+        </div>
+    </aside>
+
+    <!-- Bottom Nav Mobile -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 z-50 flex justify-around p-2 pb-safe">
+        <a href="#" data-target="home" class="nav-item mobile flex flex-col items-center p-2 text-brand text-xs font-medium"><i class="ph-fill ph-squares-four text-xl mb-1"></i>Home</a>
+        <a href="#" data-target="contacts" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-users text-xl mb-1"></i>CRM</a>
+        <a href="#" data-target="blast" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium relative"><div class="absolute -top-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"><i class="ph ph-rocket-launch text-xl"></i></div><span class="mt-4">Blast</span></a>
+        <a href="#" data-target="history" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-clock text-xl mb-1"></i>Riwayat</a>
+        <a href="#" data-target="settings" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-gear text-xl mb-1"></i>Setting</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-[#fafafa]/80 dark:bg-zinc-950/80 backdrop-blur-md h-16 flex items-center justify-between px-4 md:px-8 border-b border-zinc-200 dark:border-zinc-800">
+            <h2 id="pageTitle" class="text-xl font-semibold tracking-tight">Dashboard</h2>
+            <div class="flex items-center gap-4">
+                <button id="darkModeToggle" class="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-200/50 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
+                    <i class="ph ph-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <div class="flex-1 p-4 md:p-8 mb-16 md:mb-0">
+            
+            <!-- SECTION: Dashboard Home -->
+            <section id="home" class="view-section active">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col">
+                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-users"></i> Total Kontak</span>
+                        <span class="text-3xl font-bold tracking-tight">1,248</span>
+                    </div>
+                    <div class="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col">
+                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-paper-plane-right"></i> Blast Terkirim</span>
+                        <span class="text-3xl font-bold tracking-tight">8,592</span>
+                    </div>
+                    <div class="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col">
+                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-calendar-check"></i> Pesan Hari Ini</span>
+                        <span class="text-3xl font-bold tracking-tight text-indigo-500">42</span>
+                    </div>
+                    <div class="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col">
+                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-device-mobile"></i> Status Fonnte</span>
+                        <span class="text-lg font-bold tracking-tight text-emerald-500 flex items-center gap-2 mt-1"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span> Connected</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        <h3 class="font-semibold mb-4">Aktivitas Pesan (7 Hari Terakhir)</h3>
+                        <canvas id="activityChart" height="100"></canvas>
+                    </div>
+                    <div class="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                        <h3 class="font-semibold mb-4">Aktivitas Terakhir</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0"><i class="ph ph-check"></i></div>
+                                <div><p class="text-sm font-medium">Promo Ramadhan selesai</p><p class="text-xs text-zinc-500">500 terkirim • 2 jam lalu</p></div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0"><i class="ph ph-users"></i></div>
+                                <div><p class="text-sm font-medium">Import 120 kontak baru</p><p class="text-xs text-zinc-500">via Excel • 5 jam lalu</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: CRM Kontak -->
+            <section id="contacts" class="view-section hidden">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div class="relative w-full md:w-96">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"></i>
+                        <input type="text" placeholder="Cari nama atau nomor..." class="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm">
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto">
+                        <!-- Import Excel btn -->
+                        <label class="cursor-pointer bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm font-medium px-4 py-2 rounded-xl shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 flex items-center gap-2">
+                            <i class="ph ph-file-xls"></i> Import CSV/Excel
+                            <input type="file" id="importExcel" accept=".xlsx, .xls, .csv" class="hidden">
+                        </label>
+                        <button class="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium px-4 py-2 rounded-xl shadow-sm hover:bg-zinc-800 transition-colors flex items-center gap-2 w-full md:w-auto justify-center">
+                            <i class="ph ph-plus"></i> Tambah
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
+                                <tr>
+                                    <th class="px-6 py-4 font-medium">Nama Customer</th>
+                                    <th class="px-6 py-4 font-medium">No. WhatsApp</th>
+                                    <th class="px-6 py-4 font-medium">Tag</th>
+                                    <th class="px-6 py-4 font-medium text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800" id="contactTableBody">
+                                <!-- Data dummy dirender via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION: WA Blast (SUDAH DIMODIFIKASI UNTUK TESTING) -->
+            <section id="blast" class="view-section hidden max-w-4xl mx-auto">
+                <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-6 md:p-8 space-y-8">
+                        <div>
+                            <h3 class="text-lg font-semibold mb-1">Kirim Pesan Massal</h3>
+                            <p class="text-sm text-zinc-500">Pastikan Token API Fonnte Anda sudah disetting di menu Pengaturan.</p>
+                        </div>
+                        
+                        <div class="space-y-5">
+                            <!-- Input Nomor Manual untuk Testing -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Nomor Target WhatsApp</label>
+                                <input type="text" id="targetNumbers" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm transition-all" placeholder="Contoh: 08123456789, 08987654321">
+                                <p class="text-xs text-zinc-500 mt-2">Pisahkan dengan koma ( , ) jika lebih dari 1 nomor.</p>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between items-end mb-2">
+                                    <label class="block text-sm font-medium">Template Pesan (Opsional)</label>
+                                    <button class="text-xs text-indigo-500 font-medium">Kelola Template</button>
+                                </div>
+                                <select class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm appearance-none">
+                                    <option>Pilih Template...</option>
+                                    <option>Promo Akhir
