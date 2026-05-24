@@ -1,7 +1,8 @@
+console.log("Sistem App.js mulai dimuat...");
+
 // ==========================================
 // 1. INISIALISASI SUPABASE & PROTEKSI LOGIN
 // ==========================================
-// PENTING: Ganti dengan URL dan Key Anda sendiri!
 const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
 
@@ -16,9 +17,13 @@ if (window.supabase) {
 // Fungsi Proteksi: Tendang ke halaman login jika belum login
 async function checkAuth() {
     if (!supabase) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-        window.location.href = 'index.html';
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.warn("Gagal mengecek session auth, jalankan mode offline.");
     }
 }
 // Jalankan pengecekan keamanan saat file dimuat (Khusus untuk dashboard.html)
@@ -30,6 +35,7 @@ if (window.location.pathname.includes('dashboard.html')) {
 // 2. SEMUA LOGIKA UI & DASHBOARD (Jalan saat halaman siap)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM Siap. Menjalankan modul...");
 
     // --- A. FUNGSI LOGOUT ---
     const logoutBtn = document.getElementById('logoutBtn');
@@ -51,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- B. SPA NAVIGATION LOGIC (PERBAIKAN SIDEBAR) ---
+    // --- B. SPA NAVIGATION LOGIC (PERBAIKAN KELAS HIDDEN) ---
     const navItems = document.querySelectorAll('.nav-item');
     const viewSections = document.querySelectorAll('.view-section');
     const pageTitle = document.getElementById('pageTitle');
@@ -69,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             const target = item.getAttribute('data-target');
+            if (!target) return;
             
             // 1. Hilangkan status aktif dari semua menu
             navItems.forEach(nav => nav.classList.remove('active'));
@@ -76,14 +83,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // 2. Beri status aktif pada menu yang diklik (Desktop & Mobile)
             document.querySelectorAll(`.nav-item[data-target="${target}"]`).forEach(n => n.classList.add('active'));
 
-            // 3. Sembunyikan semua section konten
+            // 3. Sembunyikan semua section dengan menambahkan kembali kelas 'hidden'
             viewSections.forEach(section => {
                 section.classList.remove('active');
+                section.classList.add('hidden'); 
             });
             
-            // 4. Tampilkan section yang sesuai dengan menu
+            // 4. Tampilkan section yang sesuai dengan menghapus kelas 'hidden'
             const targetSection = document.getElementById(target);
-            if (targetSection) targetSection.classList.add('active');
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                targetSection.classList.add('active');
+            }
 
             // 5. Ubah Judul Header
             if (pageTitle && titles[target]) {
@@ -136,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
                     y: { beginAtZero: true, grid: { display: true, color: 'rgba(0,0,0,0.05)' }, border: { dash: [4, 4] } },
@@ -240,4 +252,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-}); // <-- Penutup DOMContentLoaded
+}); // Penutup DOMContentLoaded
