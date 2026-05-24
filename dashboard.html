@@ -10,7 +10,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- TAMBAHKAN BARIS INI JIKA BELUM ADA -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
@@ -63,11 +62,11 @@
 
     <!-- Bottom Nav Mobile -->
     <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-lg border-t border-zinc-200 dark:border-zinc-800 z-50 flex justify-around p-2 pb-safe">
-        <a href="#" data-target="home" class="nav-item mobile flex flex-col items-center p-2 text-brand text-xs font-medium"><i class="ph-fill ph-squares-four text-xl mb-1"></i>Home</a>
-        <a href="#" data-target="contacts" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-users text-xl mb-1"></i>CRM</a>
-        <a href="#" data-target="blast" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium relative"><div class="absolute -top-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"><i class="ph ph-rocket-launch text-xl"></i></div><span class="mt-4">Blast</span></a>
-        <a href="#" data-target="history" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-clock text-xl mb-1"></i>Riwayat</a>
-        <a href="#" data-target="settings" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-gear text-xl mb-1"></i>Setting</a>
+        <a href="javascript:void(0)" data-target="home" class="nav-item mobile flex flex-col items-center p-2 text-brand text-xs font-medium"><i class="ph-fill ph-squares-four text-xl mb-1"></i>Home</a>
+        <a href="javascript:void(0)" data-target="contacts" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-users text-xl mb-1"></i>CRM</a>
+        <a href="javascript:void(0)" data-target="blast" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium relative"><div class="absolute -top-4 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"><i class="ph ph-rocket-launch text-xl"></i></div><span class="mt-4">Blast</span></a>
+        <a href="javascript:void(0)" data-target="history" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-clock text-xl mb-1"></i>Riwayat</a>
+        <a href="javascript:void(0)" data-target="settings" class="nav-item mobile flex flex-col items-center p-2 text-zinc-400 text-xs font-medium"><i class="ph ph-gear text-xl mb-1"></i>Setting</a>
     </nav>
 
     <!-- Main Content -->
@@ -109,7 +108,9 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                         <h3 class="font-semibold mb-4">Aktivitas Pesan (7 Hari Terakhir)</h3>
-                        <canvas id="activityChart" height="100"></canvas>
+                        <div class="relative w-full h-64">
+                            <canvas id="activityChart"></canvas>
+                        </div>
                     </div>
                     <div class="bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
                         <h3 class="font-semibold mb-4">Aktivitas Terakhir</h3>
@@ -165,7 +166,7 @@
                 </div>
             </section>
 
-            <!-- SECTION: WA Blast (SUDAH DIMODIFIKASI UNTUK TESTING) -->
+            <!-- SECTION: WA Blast -->
             <section id="blast" class="view-section hidden max-w-4xl mx-auto">
                 <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-6 md:p-8 space-y-8">
@@ -189,4 +190,60 @@
                                 </div>
                                 <select class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm appearance-none">
                                     <option>Pilih Template...</option>
-                                    <option>Promo Akhir
+                                    <option>Promo Akhir Bulan</option>
+                                    <option>Reminder Tagihan</option>
+                                </select>
+                            </div>
+
+                            <!-- Input Area Pesan -->
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Pesan (Mendukung Spintax & Variable)</label>
+                                <textarea id="blastMessage" rows="5" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm resize-none transition-all" placeholder="Halo {name}, dapatkan penawaran spesial..."></textarea>
+                                <p class="text-xs text-zinc-500 mt-2">Gunakan {name} untuk memanggil nama kontak.</p>
+                            </div>
+                            
+                            <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
+                                <button class="px-6 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors">Simpan Draft</button>
+                                <button id="btnSendBlast" class="px-6 py-2.5 rounded-xl text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 transition-colors shadow-sm flex items-center gap-2">
+                                    <i class="ph ph-paper-plane-right"></i> Kirim Sekarang
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- SECTION: Placeholder -->
+            <section id="templates" class="view-section hidden"><div class="empty-state"><h3>Menu Template</h3></div></section>
+            <section id="history" class="view-section hidden"><div class="empty-state"><h3>Menu Riwayat</h3></div></section>
+            
+            <!-- SECTION: Pengaturan -->
+            <section id="settings" class="view-section hidden max-w-2xl mx-auto">
+                <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-8">
+                    <h3 class="font-semibold text-lg mb-2">Pengaturan Integrasi</h3>
+                    <p class="text-sm text-zinc-500 mb-6">Hubungkan aplikasi Anda dengan API eksternal.</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 flex items-center gap-2">
+                                <i class="ph ph-key text-zinc-400"></i> Fonnte API Token
+                            </label>
+                            <input type="password" id="fonnteTokenInput" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none transition-all text-sm" placeholder="Paste Token Anda di sini">
+                            <p class="text-xs text-zinc-500 mt-2">Token akan disimpan aman secara lokal di browser Anda (Local Storage).</p>
+                        </div>
+                        <div class="pt-2">
+                            <button id="btnSaveFonnte" class="bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 text-sm font-medium px-5 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+                                <i class="ph ph-arrows-clockwise"></i> Simpan & Test Koneksi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Pastikan file JavaScript dipanggil dengan benar -->
+    <script src="app.js"></script>
+</body>
+</html>
