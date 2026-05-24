@@ -19,7 +19,7 @@ try {
     console.error("Gagal menginisialisasi Supabase:", error);
 }
 
-// Fungsi Proteksi: Tendang ke halaman login jika tidak memiliki sesi
+// Fungsi Proteksi Sesi Login
 async function checkAuth() {
     if (!supabaseClient) return;
     try {
@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const html = document.documentElement;
 
-    // ======================================================================
-    // --- DEKLARASI EXPLICIT SEMUA ELEMENT DOM DI ATAS (MENCEGAH REFERENCE ERROR) --- [1]
-    // ======================================================================
+    // ----------------------------------------------------------------------
+    // [A] DEKLARASI EXPLICIT SEMUA ELEMENT DOM DI ATAS (MENCEGAH REFERENCE ERROR) [1]
+    // ----------------------------------------------------------------------
     
     // UI Global & Navigation
     const navItems = document.querySelectorAll('.nav-item');
@@ -159,112 +159,82 @@ document.addEventListener('DOMContentLoaded', () => {
     const tokenInput = document.getElementById('fonnteTokenInput');
     const btnSaveFonnte = document.getElementById('btnSaveFonnte');
 
-    // ======================================================================
+    // ----------------------------------------------------------------------
+    // [B] VARIABEL DEKLARASI DATA & KAMUS KONFIGURASI
+    // ----------------------------------------------------------------------
+    
+    const titles = {
+        'home': 'Dashboard',
+        'contacts': 'CRM Customer Management',
+        'templates': 'Template Pesan',
+        'blast': 'Anti-Ban WA Blast Panel',
+        'history': 'Riwayat Blast',
+        'settings': 'Pengaturan Sistem'
+    };
 
-    // --- A. FUNGSI LOGOUT ---
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            const result = await Swal.fire({
-                title: 'Yakin ingin keluar?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#18181b',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Keluar'
-            });
+    const spamKeywords = ['GRATIS!!!', 'CUAN BESAR', 'KLIK SEKARANG', 'SLOT', 'PINJOL', 'PROMO GILA', 'MENANG BANYAK'];
+    const greetings = ["Halo kak 👋", "Hai kak 😊", "Selamat pagi kak ☀️", "Selamat siang kak 👋", "Selamat sore kak ☕", "Sore kak 😊", "Hallo kak ✨"];
+    const randomEmojis = ["👋", "😊", "✨", "🔥", "👍", "☀️", "🙏", "⚡", "🚀"];
 
-            if (result.isConfirmed) {
-                if (supabaseClient) await supabaseClient.auth.signOut();
-                window.location.href = 'index.html';
-            }
-        });
-    }
+    const defaultCustomers = [
+        { id: "17b354ca-fa2e-40dc-bc76-d183df592651", name: "Sarah Connor", phone: "6281234567890", tags: "VIP Customer, Hot Lead", transactions: 9500000, source: "Instagram", last_active: "2026-05-20", score: 85 },
+        { id: "e6f4773c-ba32-47ef-bc90-9988ff77ea10", name: "John Doe", phone: "6281987654321", tags: "Warm Lead", transactions: 1200000, source: "Website Direct", last_active: "2026-05-15", score: 45 },
+        { id: "28cfa100-332e-4cf4-90aa-bd88aa33ba21", name: "T-800 Terminator", phone: "6285611223344", tags: "Dormant Customer, Cold Lead", transactions: 0, source: "Referral", last_active: "2026-04-01", score: 10 }
+    ];
 
-    // --- B. SPA NAVIGATION LOGIC ---
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const target = item.getAttribute('data-target');
-            if (!target) return;
-            
-            navItems.forEach(nav => nav.classList.remove('active'));
-            document.querySelectorAll(`.nav-item[data-target="${target}"]`).forEach(n => n.classList.add('active'));
+    const defaultTemplates = [
+        { id: "tpl-1", title: "Promo Akhir Bulan", category: "Promo", content: "Halo kak 👋 Ada promo terbaru hari ini.\n\nDapatkan diskon gila-gilaan akhir bulan up to 50% khusus produk terlaris kami!\n\nKlik link berikut untuk order: s.id/order-promo" },
+        { id: "tpl-2", title: "Reminder Tagihan", category: "Tagihan", content: "Hai kak 😊 Mau info promo spesial hari ini?\n\nKami ingin mengingatkan bahwa tagihan Anda bulan ini akan jatuh tempo dalam 3 hari lagi.\n\nSilakan abaikan pesan ini jika Anda sudah melakukan pembayaran." }
+    ];
 
-            viewSections.forEach(section => {
-                section.classList.remove('active');
-                section.classList.add('hidden'); 
-            });
-            
-            const targetSection = document.getElementById(target);
-            if (targetSection) {
-                targetSection.classList.remove('hidden');
-                targetSection.classList.add('active');
-            }
-
-            if (pageTitle && titles[target]) {
-                pageTitle.innerText = titles[target];
-            }
-        });
-    });
-
-    // --- C. DARK MODE TOGGLE ---
-    if (darkToggle) {
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            html.classList.add('dark');
-            darkToggle.innerHTML = '<i class="ph ph-sun"></i>';
-        }
-
-        darkToggle.addEventListener('click', () => {
-            html.classList.toggle('dark');
-            if (html.classList.contains('dark')) {
-                localStorage.theme = 'dark';
-                darkToggle.innerHTML = '<i class="ph ph-sun"></i>';
-            } else {
-                localStorage.theme = 'light';
-                darkToggle.innerHTML = '<i class="ph ph-moon"></i>';
-            }
-        });
-    }
-
-    // --- D. INITIALIZE GRAFIK CHART.JS ---
-    const chartCanvas = document.getElementById('activityChart');
-    if (chartCanvas && typeof Chart !== 'undefined') {
-        new Chart(chartCanvas, {
-            type: 'line',
-            data: {
-                labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
-                datasets: [{
-                    label: 'Pesan Terkirim',
-                    data: [120, 190, 300, 250, 420, 150, 500],
-                    borderColor: '#18181b', 
-                    backgroundColor: 'rgba(24, 24, 27, 0.05)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#18181b',
-                    pointBorderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, grid: { display: true, color: 'rgba(0,0,0,0.05)' }, border: { dash: [4, 4] } },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-    }
-
-    // ==========================================
-    // MODULE: ADVANCED CRM CUSTOMER ENGINE (contacts)
-    // ==========================================
     let crmData = JSON.parse(localStorage.getItem('saved_crm_data')) || defaultCustomers;
+    let templates = JSON.parse(localStorage.getItem('saved_templates')) || defaultTemplates;
+    let localHistory = JSON.parse(localStorage.getItem('saved_blast_history')) || [
+        { date: "2026-05-23 14:30", total: 150, success: 148, failed: 2, delay: "30s - 60s", status: "Success" }
+    ];
+
     let activeSegment = "all";
     let selectedCRMIds = [];
     let currentViewingCustomerId = null;
+    let cancelCampaign = false;
+    let searchTimeout;
+
+    // ----------------------------------------------------------------------
+    // [C] FUNGSI-FUNGSI UTAMA (HOISTING-SAFE: DITULIS SEBELUM DIGUNAKAN) [1]
+    // ----------------------------------------------------------------------
+    
+    function formatRupiah(number) {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+    }
+
+    function openCustomerModal(id = null) {
+        if (!customerModal) return;
+        customerModal.classList.remove('hidden');
+
+        if (id) {
+            const cust = crmData.find(x => x.id === id);
+            if (cust) {
+                document.getElementById('custModalTitle').innerText = "Edit Detail Customer";
+                document.getElementById('custIndex').value = cust.id;
+                document.getElementById('custName').value = cust.name;
+                document.getElementById('custPhone').value = cust.phone;
+                document.getElementById('custTags').value = cust.tags;
+                document.getElementById('custTransactions').value = cust.transactions;
+                document.getElementById('custSource').value = cust.source || 'Manual';
+            }
+        } else {
+            document.getElementById('custModalTitle').innerText = "Tambah Customer Baru";
+            customerForm.reset();
+            document.getElementById('custIndex').value = '';
+        }
+    }
+
+    function closeCustomerModal() {
+        if (customerModal) {
+            customerModal.classList.add('hidden');
+            waValidationWarning.classList.add('hidden');
+        }
+    }
 
     async function syncContactsFromSupabase() {
         if (!supabaseClient) {
@@ -436,29 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCRMAnalytics();
     }
 
-    // --- DEBOUNCE SEARCH ---
-    if (crmSearch) {
-        crmSearch.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                renderCRM();
-            }, 300);
-        });
-    }
-
-    // --- SISTEM SEGMENTASI (SAVED SEGMENTS) ---
-    const segmentButtons = document.querySelectorAll('#savedSegmentsList button');
-    segmentButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            segmentButtons.forEach(b => b.className = "w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50 flex justify-between items-center");
-            btn.className = "w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex justify-between items-center";
-            
-            activeSegment = btn.getAttribute('data-segment');
-            renderCRM();
-        });
-    });
-
-    // --- ANALYTICS BAR COUNTER ---
     function updateCRMAnalytics() {
         if (!crmStatTotal) return;
 
@@ -488,19 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (badgeSegDormant) badgeSegDormant.textContent = dormant;
     }
 
-    // --- STICKY BULK ACTIONS TOOLBAR ---
-    if (chkSelectAllCRM) {
-        chkSelectAllCRM.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                selectedCRMIds = crmData.map(c => c.id);
-            } else {
-                selectedCRMIds = [];
-            }
-            renderCRM();
-            updateBulkToolbar();
-        });
-    }
-
     function updateBulkToolbar() {
         if (!stickyBulkToolbar) return;
 
@@ -515,173 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const btnBulkDelete = document.getElementById('btnBulkDelete');
-    if (btnBulkDelete) {
-        btnBulkDelete.addEventListener('click', async () => {
-            const result = await Swal.fire({
-                title: `Hapus ${selectedCRMIds.length} kontak terpilih?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33'
-            });
-
-            if (result.isConfirmed) {
-                try {
-                    if (supabaseClient) {
-                        await supabaseClient.from('contacts').delete().in('id', selectedCRMIds);
-                    }
-                } catch (e) { console.error(e); }
-
-                crmData = crmData.filter(c => !selectedCRMIds.includes(c.id));
-                localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
-                selectedCRMIds = [];
-                renderCRM();
-                updateBulkToolbar();
-                Swal.fire('Terhapus', 'Kontak terpilih berhasil dihapus.', 'success');
-            }
-        });
-    }
-
-    const btnBulkBlast = document.getElementById('btnBulkBlast');
-    if (btnBulkBlast) {
-        btnBulkBlast.addEventListener('click', () => {
-            const targetList = crmData.filter(c => selectedCRMIds.includes(c.id)).map(c => c.phone).join(', ');
-            
-            document.querySelector('[data-target="blast"]').click();
-            document.getElementById('targetNumbers').value = targetList;
-            document.getElementById('targetNumbers').dispatchEvent(new Event('input'));
-
-            selectedCRMIds = [];
-            updateBulkToolbar();
-            renderCRM();
-        });
-    }
-
-    // --- COLUMN CUSTOMIZATION ---
-    if (btnToggleColumns && columnSelectorPopover) {
-        btnToggleColumns.addEventListener('click', (e) => {
-            e.stopPropagation();
-            columnSelectorPopover.classList.toggle('hidden');
-        });
-
-        document.addEventListener('click', () => {
-            columnSelectorPopover.classList.add('hidden');
-        });
-
-        columnSelectorPopover.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        document.querySelectorAll('.col-toggle').forEach(chk => {
-            chk.addEventListener('change', (e) => {
-                const targetCol = e.target.getAttribute('data-col');
-                const cells = document.querySelectorAll(`.${targetCol}`);
-                cells.forEach(c => {
-                    if (e.target.checked) {
-                        c.classList.remove('hidden');
-                    } else {
-                        c.classList.add('hidden');
-                    }
-                });
-            });
-        });
-    }
-
-    // --- PRO EXPORT EXCEL ---
-    if (btnExportMenu) {
-        btnExportMenu.addEventListener('click', () => {
-            const ws = XLSX.utils.json_to_sheet(crmData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "CRM Customers");
-            XLSX.writeFile(wb, "SaaS_CRM_Export.xlsx");
-            Swal.fire('Sukses Export', 'Data berhasil diexport ke file Excel.', 'success');
-        });
-    }
-
-    // --- SMART IMPORT CSV/EXCEL ---
-    if (importCRMExcel) {
-        importCRMExcel.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rawImported = XLSX.utils.sheet_to_json(firstSheet);
-
-                let addedCount = 0;
-                let mergedCount = 0;
-
-                let userId = null;
-                if (supabaseClient) {
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    if (session) userId = session.user.id;
-                }
-
-                for (const row of rawImported) {
-                    const cleanPhone = String(row.phone || row.Phone || '').trim();
-                    const cleanName = String(row.name || row.Name || 'Tanpa Nama').trim();
-                    const cleanTags = String(row.tags || row.Tags || 'Imported').trim();
-                    const cleanLTV = parseInt(row.transactions || row.Transactions || 0);
-                    const cleanSource = String(row.source || row.Source || 'Import').trim();
-
-                    if (cleanPhone) {
-                        const existingIdx = crmData.findIndex(x => x.phone === cleanPhone);
-                        if (existingIdx !== -1) {
-                            crmData[existingIdx].transactions += cleanLTV;
-                            crmData[existingIdx].tags += `, ${cleanTags}`;
-                            crmData[existingIdx].score = Math.min((crmData[existingIdx].score || 40) + 10, 100);
-                            
-                            if (supabaseClient) {
-                                await supabaseClient.from('contacts').update({
-                                    transactions: crmData[existingIdx].transactions,
-                                    tags: crmData[existingIdx].tags,
-                                    score: crmData[existingIdx].score
-                                }).eq('id', crmData[existingIdx].id);
-                            }
-                            mergedCount++;
-                        } else {
-                            const newId = 'cust-' + Date.now() + Math.random().toString(36).substr(2, 5);
-                            const newContact = {
-                                id: supabaseClient ? undefined : newId,
-                                name: cleanName,
-                                phone: cleanPhone,
-                                tags: cleanTags,
-                                transactions: cleanLTV,
-                                source: cleanSource,
-                                last_active: new Date().toISOString().split('T')[0],
-                                score: 50,
-                                user_id: userId
-                            };
-
-                            if (supabaseClient) {
-                                const { data: dbData } = await supabaseClient.from('contacts').insert([newContact]).select();
-                                if (dbData && dbData[0]) crmData.push(dbData[0]);
-                            } else {
-                                crmData.push({ ...newContact, id: newId });
-                            }
-                            addedCount++;
-                        }
-                    }
-                }
-
-                localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
-                renderCRM();
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Smart Import Berhasil!',
-                    text: `Menambahkan ${addedCount} kontak baru dan merge ${mergedCount} kontak duplikat.`,
-                    confirmButtonColor: '#18181b'
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
-    // --- NOTION-STYLE DETAIL DRAWER LOGIC ---
     async function openCustomerDrawer(id) {
         if (!customerDrawer) return;
         currentViewingCustomerId = id;
@@ -715,9 +482,6 @@ document.addEventListener('DOMContentLoaded', () => {
         currentViewingCustomerId = null;
     }
 
-    if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeCustomerDrawer);
-
-    // --- RENDERING TIMELINE ---
     async function renderTimeline(cust) {
         if (!drawerTimeline) return;
         drawerTimeline.innerHTML = '';
@@ -758,6 +522,394 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function renderTemplates() {
+        if (!templatesGrid || !templateEmptyState) return;
+        
+        if (templates.length === 0) {
+            templatesGrid.classList.add('hidden');
+            templateEmptyState.classList.remove('hidden');
+            return;
+        }
+
+        templateEmptyState.classList.add('hidden');
+        templatesGrid.classList.remove('hidden');
+        templatesGrid.innerHTML = '';
+
+        templates.forEach(tpl => {
+            const card = document.createElement('div');
+            card.className = "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 relative flex flex-col justify-between hover:shadow-md transition-shadow";
+            card.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start mb-2 gap-2">
+                        <h4 class="font-semibold text-zinc-900 dark:text-white truncate" title="${tpl.title}">${tpl.title}</h4>
+                        <span class="shrink-0 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 rounded-md border border-zinc-200 dark:border-zinc-700 uppercase tracking-wider">${tpl.category}</span>
+                    </div>
+                    <p class="text-xs text-zinc-500 line-clamp-4 mt-2 whitespace-pre-line">${tpl.content}</p>
+                </div>
+                <div class="flex justify-between items-center border-t border-zinc-100 dark:border-zinc-800 pt-4 mt-4">
+                    <button class="btn-copy text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-xs font-medium flex items-center gap-1 transition-colors" data-content="${encodeURIComponent(tpl.content)}">
+                        <i class="ph ph-copy"></i> Copy
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button class="btn-edit text-zinc-400 hover:text-indigo-500 p-1 transition-colors text-lg" data-id="${tpl.id}">
+                            <i class="ph ph-pencil-simple"></i>
+                        </button>
+                        <button class="btn-delete text-zinc-400 hover:text-red-500 p-1 transition-colors text-lg" data-id="${tpl.id}">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            templatesGrid.appendChild(card);
+        });
+
+        document.querySelectorAll('.btn-copy').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const textToCopy = decodeURIComponent(e.currentTarget.getAttribute('data-content'));
+                navigator.clipboard.writeText(textToCopy);
+                Swal.fire({ icon: 'success', title: 'Berhasil di-copy!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            });
+        });
+
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                openTemplateModal(id);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                const result = await Swal.fire({
+                    title: 'Hapus template?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33'
+                });
+
+                if (result.isConfirmed) {
+                    templates = templates.filter(t => t.id !== id);
+                    localStorage.setItem('saved_templates', JSON.stringify(templates));
+                    renderTemplates();
+                    populateBlastDropdown();
+                    Swal.fire('Terhapus!', 'Template berhasil dihapus.', 'success');
+                }
+            });
+        });
+    }
+
+    function populateBlastDropdown() {
+        if (!blastTemplateSelect) return;
+        const currentValue = blastTemplateSelect.value;
+        blastTemplateSelect.innerHTML = '<option value="">Pilih Template...</option>';
+        
+        templates.forEach(tpl => {
+            const option = document.createElement('option');
+            option.value = tpl.id;
+            option.textContent = `${tpl.title} (${tpl.category})`;
+            blastTemplateSelect.appendChild(option);
+        });
+        blastTemplateSelect.value = currentValue;
+    }
+
+    function openTemplateModal(id = null) {
+        if (!templateModal) return;
+        templateModal.classList.remove('hidden');
+
+        if (id) {
+            const tpl = templates.find(t => t.id === id);
+            if (tpl) {
+                document.getElementById('modalTemplateTitle').innerText = "Edit Template Pesan";
+                templateIdInput.value = tpl.id;
+                tplTitleInput.value = tpl.title;
+                tplCategoryInput.value = tpl.category;
+                tplContentInput.value = tpl.content;
+            }
+        } else {
+            document.getElementById('modalTemplateTitle').innerText = "Tambah Template Baru";
+            templateForm.reset();
+            templateIdInput.value = '';
+        }
+    }
+
+    function closeTemplateModal() {
+        if (templateModal) templateModal.classList.add('hidden');
+    }
+
+    function addVariationInput(initialContent = '') {
+        if (!variationContainer) return;
+        const index = variationContainer.children.length + 1;
+        const div = document.createElement('div');
+        div.className = "relative group flex items-start gap-2 bg-zinc-50 dark:bg-zinc-800/40 p-3.5 rounded-xl border border-zinc-100 dark:border-zinc-800 transition-all";
+        div.innerHTML = `
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-semibold text-zinc-400">Variasi Template #${index}</span>
+                    <button type="button" class="btn-remove-variation text-xs text-rose-500 hover:opacity-80 transition-opacity hidden group-hover:block"><i class="ph ph-trash"></i> Hapus</button>
+                </div>
+                <textarea rows="3" class="tpl-rotation-input w-full bg-transparent outline-none text-sm resize-none text-zinc-900 dark:text-white" placeholder="Masukkan variasi pesan lainnya disini...">${initialContent}</textarea>
+            </div>
+        `;
+        variationContainer.appendChild(div);
+
+        const textarea = div.querySelector('.tpl-rotation-input');
+        textarea.addEventListener('input', () => {
+            scanForSpamContent();
+        });
+
+        div.querySelector('.btn-remove-variation').addEventListener('click', () => {
+            if (variationContainer.children.length > 1) {
+                div.remove();
+                reindexVariationLabels();
+                scanForSpamContent();
+            } else {
+                Swal.fire('Oops', 'Harus menyisakan minimal 1 variasi pesan.', 'warning');
+            }
+        });
+    }
+
+    function reindexVariationLabels() {
+        if (!variationContainer) return;
+        Array.from(variationContainer.children).forEach((child, index) => {
+            child.querySelector('span').textContent = `Variasi Template #${index + 1}`;
+        });
+    }
+
+    function scanForSpamContent() {
+        let isSpamFound = false;
+        const textareas = document.querySelectorAll('.tpl-rotation-input');
+        
+        textareas.forEach(textarea => {
+            const text = textarea.value.toUpperCase();
+            spamKeywords.forEach(keyword => {
+                if (text.includes(keyword.toUpperCase())) {
+                    isSpamFound = true;
+                }
+            });
+        });
+
+        if (isSpamFound) {
+            if (spamWarningBox) spamWarningBox.classList.remove('hidden');
+            updateDeviceHealth('warning');
+        } else {
+            if (spamWarningBox) spamWarningBox.classList.add('hidden');
+            updateDeviceHealth('safe');
+        }
+    }
+
+    function selectPreset(mode) {
+        if (!presetSafe) return;
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.classList.remove('active', 'bg-zinc-900', 'text-white', 'dark:bg-white', 'dark:text-zinc-950', 'border-zinc-900', 'dark:border-white');
+            btn.classList.add('border-zinc-200', 'dark:border-zinc-800', 'text-zinc-700', 'dark:text-zinc-300');
+        });
+
+        const activeBtn = document.getElementById(`btnPreset${mode}`);
+        activeBtn.classList.remove('border-zinc-200', 'dark:border-zinc-800', 'text-zinc-700', 'dark:text-zinc-300');
+        activeBtn.classList.add('active', 'bg-zinc-900', 'text-white', 'dark:bg-white', 'dark:text-zinc-950', 'border-zinc-900', 'dark:border-white');
+
+        if (mode === 'Safe') {
+            minDelayInput.value = 30;
+            maxDelayInput.value = 60;
+            batchSizeInput.value = 15;
+            batchPauseInput.value = 3;
+            presetDesc.textContent = "Mode Safe: Delay panjang (30-60 detik) dengan jeda batch ketat. Sangat direkomendasikan.";
+            updateDeviceHealth('safe');
+        } else if (mode === 'Normal') {
+            minDelayInput.value = 15;
+            maxDelayInput.value = 30;
+            batchSizeInput.value = 30;
+            batchPauseInput.value = 2;
+            presetDesc.textContent = "Mode Normal: Kecepatan pengiriman sedang (15-30 detik). Sesuai untuk nomor yang sudah hangat.";
+            updateDeviceHealth('normal');
+        } else if (mode === 'Fast') {
+            minDelayInput.value = 5;
+            maxDelayInput.value = 15;
+            batchSizeInput.value = 50;
+            batchPauseInput.value = 1;
+            presetDesc.textContent = "Mode Fast: Pengiriman cepat (5-15 detik). Memiliki risiko ban sangat tinggi.";
+            updateDeviceHealth('high_risk');
+        }
+    }
+
+    async function syncHistoryFromSupabase() {
+        if (!supabaseClient || !historyTableBody) {
+            renderHistory();
+            return;
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('blast_history')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (data && data.length > 0) {
+                localHistory = data.map(x => ({
+                    date: x.created_at.replace('T', ' ').substr(0, 16),
+                    total: x.total_recipients,
+                    success: x.success_count,
+                    failed: x.failed_count,
+                    delay: "Random Delay",
+                    status: x.status
+                }));
+                localStorage.setItem('saved_blast_history', JSON.stringify(localHistory));
+            }
+        } catch (e) {
+            console.warn("Gagal sync history Supabase:", e);
+        } finally {
+            renderHistory();
+        }
+    }
+
+    function renderHistory() {
+        if (!historyTableBody) return;
+        historyTableBody.innerHTML = '';
+
+        let totalTerkirimAll = 0;
+
+        localHistory.forEach(h => {
+            totalTerkirimAll += h.success;
+            const badgeColor = h.status === 'Success' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/20';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="px-6 py-4">${h.date}</td>
+                <td class="px-6 py-4 font-semibold">${h.total}</td>
+                <td class="px-6 py-4 text-emerald-500 font-semibold">${h.success}</td>
+                <td class="px-6 py-4 text-rose-500 font-semibold">${h.failed}</td>
+                <td class="px-6 py-4 text-zinc-500">${h.delay}</td>
+                <td class="px-6 py-4 text-right">
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg ${badgeColor}">${h.status}</span>
+                </td>
+            `;
+            historyTableBody.appendChild(tr);
+        });
+
+        if (homeBlastTerkirim) homeBlastTerkirim.textContent = totalTerkirimAll;
+    }
+
+    // ----------------------------------------------------------------------
+    // [D] INTERACTIVE EVENT LISTENERS & LOGIC (DIPASANG PALING BAWAH) [1]
+    // ----------------------------------------------------------------------
+
+    // Navigasi SPA Tab Click
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = item.getAttribute('data-target');
+            if (!target) return;
+            
+            navItems.forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll(`.nav-item[data-target="${target}"]`).forEach(n => n.classList.add('active'));
+
+            viewSections.forEach(section => {
+                section.classList.remove('active');
+                section.classList.add('hidden'); 
+            });
+            
+            const targetSection = document.getElementById(target);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                targetSection.classList.add('active');
+            }
+
+            if (pageTitle && titles[target]) {
+                pageTitle.innerText = titles[target];
+            }
+        });
+    });
+
+    // CRM Search Debounce
+    if (crmSearch) {
+        crmSearch.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                renderCRM();
+            }, 300);
+        });
+    }
+
+    // CRM Saved Segments
+    const segmentButtons = document.querySelectorAll('#savedSegmentsList button');
+    segmentButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            segmentButtons.forEach(b => b.className = "w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50 flex justify-between items-center");
+            btn.className = "w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-all bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white flex justify-between items-center";
+            
+            activeSegment = btn.getAttribute('data-segment');
+            renderCRM();
+        });
+    });
+
+    // CRM Checkbox Select All
+    if (chkSelectAllCRM) {
+        chkSelectAllCRM.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                selectedCRMIds = crmData.map(c => c.id);
+            } else {
+                selectedCRMIds = [];
+            }
+            renderCRM();
+            updateBulkToolbar();
+        });
+    }
+
+    // Bulk Delete
+    if (btnBulkDelete) {
+        btnBulkDelete.addEventListener('click', async () => {
+            const result = await Swal.fire({
+                title: `Hapus ${selectedCRMIds.length} kontak terpilih?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    if (supabaseClient) {
+                        await supabaseClient.from('contacts').delete().in('id', selectedCRMIds);
+                    }
+                } catch (e) { console.error(e); }
+
+                crmData = crmData.filter(c => !selectedCRMIds.includes(c.id));
+                localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
+                selectedCRMIds = [];
+                renderCRM();
+                updateBulkToolbar();
+                Swal.fire('Terhapus', 'Kontak terpilih berhasil dihapus.', 'success');
+            }
+        });
+    }
+
+    // Bulk WA Blast
+    if (btnBulkBlast) {
+        btnBulkBlast.addEventListener('click', () => {
+            const targetList = crmData.filter(c => selectedCRMIds.includes(c.id)).map(c => c.phone).join(', ');
+            
+            document.querySelector('[data-target="blast"]').click();
+            document.getElementById('targetNumbers').value = targetList;
+            document.getElementById('targetNumbers').dispatchEvent(new Event('input'));
+
+            selectedCRMIds = [];
+            updateBulkToolbar();
+            renderCRM();
+        });
+    }
+
+    // Pro Export Excel
+    if (btnExportMenu) {
+        btnExportMenu.addEventListener('click', () => {
+            const ws = XLSX.utils.json_to_sheet(crmData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "CRM Customers");
+            XLSX.writeFile(wb, "SaaS_CRM_Export.xlsx");
+            Swal.fire('Sukses Export', 'Data berhasil diexport ke file Excel.', 'success');
+        });
+    }
+
+    // Save CRM Notes & Reminders
     if (btnSaveDrawerNote) {
         btnSaveDrawerNote.addEventListener('click', async () => {
             const noteText = drawerNoteInput.value.trim();
@@ -818,23 +970,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- MANUAL CUSTOMER ADD & UPDATE ---
+    // Modal Add Manual Customer Trigger
     if (btnAddCustomer) btnAddCustomer.addEventListener('click', () => openCustomerModal());
     if (btnCloseCustModal) btnCloseCustModal.addEventListener('click', closeCustomerModal);
     if (custModalBackdrop) custModalBackdrop.addEventListener('click', closeCustomerModal);
 
-    if (custPhone) {
-        custPhone.addEventListener('input', () => {
-            const raw = custPhone.value.trim();
-            const isValid = /^[0-9]{9,15}$/.test(raw) && (raw.startsWith('08') || raw.startsWith('628'));
-            if (!isValid && raw.length > 0) {
-                waValidationWarning.classList.remove('hidden');
-            } else {
-                waValidationWarning.classList.add('hidden');
-            }
-        });
-    }
-
+    // Save/Update Customer Form Submit
     if (customerForm) {
         customerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -929,149 +1070,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    syncContactsFromSupabase();
-
-    // ==========================================
-    // MODULE: CRUDS TEMPLATE PESAN [2]
-    // ==========================================
-    function renderTemplates() {
-        if (!templatesGrid || !templateEmptyState) return;
-        
-        if (templates.length === 0) {
-            templatesGrid.classList.add('hidden');
-            templateEmptyState.classList.remove('hidden');
-            return;
-        }
-
-        templateEmptyState.classList.add('hidden');
-        templatesGrid.classList.remove('hidden');
-        templatesGrid.innerHTML = '';
-
-        templates.forEach(tpl => {
-            const card = document.createElement('div');
-            card.className = "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 relative flex flex-col justify-between hover:shadow-md transition-shadow";
-            card.innerHTML = `
-                <div>
-                    <div class="flex justify-between items-start mb-2 gap-2">
-                        <h4 class="font-semibold text-zinc-900 dark:text-white truncate" title="${tpl.title}">${tpl.title}</h4>
-                        <span class="shrink-0 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 rounded-md border border-zinc-200 dark:border-zinc-700 uppercase tracking-wider">${tpl.category}</span>
-                    </div>
-                    <p class="text-xs text-zinc-500 line-clamp-4 mt-2 whitespace-pre-line">${tpl.content}</p>
-                </div>
-                <div class="flex justify-between items-center border-t border-zinc-100 dark:border-zinc-800 pt-4 mt-4">
-                    <button class="btn-copy text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-xs font-medium flex items-center gap-1 transition-colors" data-content="${encodeURIComponent(tpl.content)}">
-                        <i class="ph ph-copy"></i> Copy
-                    </button>
-                    <div class="flex items-center gap-2">
-                        <button class="btn-edit text-zinc-400 hover:text-indigo-500 p-1 transition-colors text-lg" data-id="${tpl.id}">
-                            <i class="ph ph-pencil-simple"></i>
-                        </button>
-                        <button class="btn-delete text-zinc-400 hover:text-red-500 p-1 transition-colors text-lg" data-id="${tpl.id}">
-                            <i class="ph ph-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            templatesGrid.appendChild(card);
-        });
-
-        document.querySelectorAll('.btn-copy').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const textToCopy = decodeURIComponent(e.currentTarget.getAttribute('data-content'));
-                navigator.clipboard.writeText(textToCopy);
-                Swal.fire({ icon: 'success', title: 'Berhasil di-copy!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-            });
-        });
-
-        document.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const id = e.currentTarget.getAttribute('data-id');
-                openModal(id);
-            });
-        });
-
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const id = e.currentTarget.getAttribute('data-id');
-                const result = await Swal.fire({
-                    title: 'Hapus template?',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33'
-                });
-
-                if (result.isConfirmed) {
-                    templates = templates.filter(t => t.id !== id);
-                    localStorage.setItem('saved_templates', JSON.stringify(templates));
-                    renderTemplates();
-                    populateBlastDropdown();
-                    Swal.fire('Terhapus!', 'Template berhasil dihapus.', 'success');
-                }
-            });
-        });
-    }
-
-    function populateBlastDropdown() {
-        if (!blastTemplateSelect) return;
-        const currentValue = blastTemplateSelect.value;
-        blastTemplateSelect.innerHTML = '<option value="">Pilih Template...</option>';
-        
-        templates.forEach(tpl => {
-            const option = document.createElement('option');
-            option.value = tpl.id;
-            option.textContent = `${tpl.title} (${tpl.category})`;
-            blastTemplateSelect.appendChild(option);
-        });
-        blastTemplateSelect.value = currentValue;
-    }
-
-    if (blastTemplateSelect) {
-        blastTemplateSelect.addEventListener('change', () => {
-            const selectedId = blastTemplateSelect.value;
-            if (selectedId) {
-                const selectedTpl = templates.find(t => t.id === selectedId);
-                if (selectedTpl) {
-                    const firstInput = document.querySelector('.tpl-rotation-input');
-                    if (firstInput) {
-                        firstInput.value = selectedTpl.content;
-                        firstInput.dispatchEvent(new Event('input'));
-                    }
-                }
-            }
-        });
-    }
-
-    renderTemplates();
-    populateBlastDropdown();
-
-    function openModal(id = null) {
-        if (!templateModal) return;
-        templateModal.classList.remove('hidden');
-
-        if (id) {
-            const tpl = templates.find(t => t.id === id);
-            if (tpl) {
-                document.getElementById('modalTemplateTitle').innerText = "Edit Template Pesan";
-                templateIdInput.value = tpl.id;
-                tplTitleInput.value = tpl.title;
-                tplCategoryInput.value = tpl.category;
-                tplContentInput.value = tpl.content;
-            }
-        } else {
-            document.getElementById('modalTemplateTitle').innerText = "Tambah Template Baru";
-            templateForm.reset();
-            templateIdInput.value = '';
-        }
-    }
-
-    function closeModal() {
-        if (templateModal) templateModal.classList.add('hidden');
-    }
-
-    if (btnOpenTemplateModal) btnOpenTemplateModal.addEventListener('click', () => openModal());
+    // Modal Template Pesan Triggers [2]
+    if (btnOpenTemplateModal) btnOpenTemplateModal.addEventListener('click', () => openTemplateModal());
     if (btnCloseTemplateModal) btnCloseTemplateModal.addEventListener('click', closeModal);
     if (modalBackdrop) modalBackdrop.addEventListener('click', closeModal);
 
+    // Save/Update Template Form Submit
     if (templateForm) {
         templateForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -1103,361 +1107,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==========================================
-    // MODULE: ADVANCED ANTI-BAN ENGINE LOGIC [1]
-    // ==========================================
-    if (targetNumbersInput) {
-        targetNumbersInput.addEventListener('input', () => {
-            const raw = targetNumbersInput.value.trim();
-            if (!raw) {
-                targetCounter.textContent = '0 Nomor';
-                return;
-            }
-            const count = raw.split(',').map(n => n.trim()).filter(n => n.length > 0).length;
-            targetCounter.textContent = `${count} Nomor`;
-        });
-    }
-
-    // Fungsi menambahkan input variasi template pesan
-    function addVariationInput(initialContent = '') {
-        if (!variationContainer) return;
-        const index = variationContainer.children.length + 1;
-        const div = document.createElement('div');
-        div.className = "relative group flex items-start gap-2 bg-zinc-50 dark:bg-zinc-800/40 p-3.5 rounded-xl border border-zinc-100 dark:border-zinc-800 transition-all";
-        div.innerHTML = `
-            <div class="flex-1">
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-xs font-semibold text-zinc-400">Variasi Template #${index}</span>
-                    <button type="button" class="btn-remove-variation text-xs text-rose-500 hover:opacity-80 transition-opacity hidden group-hover:block"><i class="ph ph-trash"></i> Hapus</button>
-                </div>
-                <textarea rows="3" class="tpl-rotation-input w-full bg-transparent outline-none text-sm resize-none text-zinc-900 dark:text-white" placeholder="Masukkan variasi pesan lainnya disini...">${initialContent}</textarea>
-            </div>
-        `;
-        variationContainer.appendChild(div);
-
-        const textarea = div.querySelector('.tpl-rotation-input');
-        textarea.addEventListener('input', () => {
-            scanForSpamContent();
-        });
-
-        div.querySelector('.btn-remove-variation').addEventListener('click', () => {
-            if (variationContainer.children.length > 1) {
-                div.remove();
-                reindexVariationLabels();
-                scanForSpamContent();
-            } else {
-                Swal.fire('Oops', 'Harus menyisakan minimal 1 variasi pesan.', 'warning');
-            }
-        });
-    }
-
-    function reindexVariationLabels() {
-        if (!variationContainer) return;
-        Array.from(variationContainer.children).forEach((child, index) => {
-            child.querySelector('span').textContent = `Variasi Template #${index + 1}`;
-        });
-    }
-
-    function scanForSpamContent() {
-        let isSpamFound = false;
-        const textareas = document.querySelectorAll('.tpl-rotation-input');
-        
-        textareas.forEach(textarea => {
-            const text = textarea.value.toUpperCase();
-            spamKeywords.forEach(keyword => {
-                if (text.includes(keyword.toUpperCase())) {
-                    isSpamFound = true;
-                }
-            });
-        });
-
-        if (isSpamFound) {
-            if (spamWarningBox) spamWarningBox.classList.remove('hidden');
-            updateDeviceHealth('warning');
-        } else {
-            if (spamWarningBox) spamWarningBox.classList.add('hidden');
-            updateDeviceHealth('safe');
-        }
-    }
-
-    if (btnAddNewVariation) {
-        btnAddNewVariation.addEventListener('click', () => {
-            if (variationContainer.children.length < 5) {
-                addVariationInput();
-            } else {
-                Swal.fire('Limit Variasi', 'Maksimal penggunaan variasi rotasi template adalah 5.', 'info');
-            }
-        });
-    }
-
-    addVariationInput("Halo kak, kami ada penawaran menarik khusus hari ini!");
-
-    // --- LOGIKA SETTING PRESET ANTI-BAN ---
-    if (presetSafe) presetSafe.addEventListener('click', () => selectPreset('Safe'));
-    if (presetNormal) presetNormal.addEventListener('click', () => selectPreset('Normal'));
-    if (presetFast) presetFast.addEventListener('click', () => selectPreset('Fast'));
-
-    // --- DAILY LIMIT SELECTION ---
-    if (btnLimitNewNum && btnLimitActiveNum) {
-        btnLimitNewNum.addEventListener('click', () => {
-            btnLimitNewNum.classList.add('text-zinc-900', 'dark:text-white', 'font-semibold');
-            btnLimitActiveNum.classList.remove('text-zinc-900', 'dark:text-white', 'font-semibold');
-            btnLimitActiveNum.classList.add('text-zinc-500');
-            txtDailyLimitRec.textContent = '50 / Hari (Nomor Baru)';
-        });
-
-        btnLimitActiveNum.addEventListener('click', () => {
-            btnLimitActiveNum.classList.add('text-zinc-900', 'dark:text-white', 'font-semibold');
-            btnLimitNewNum.classList.remove('text-zinc-900', 'dark:text-white', 'font-semibold');
-            btnLimitNewNum.classList.add('text-zinc-500');
-            txtDailyLimitRec.textContent = '200 / Hari (Nomor Lama/Aktif)';
-        });
-    }
-
-    // ==========================================
-    // MODULE: CORE QUEUE CAMPAIGN RUNNER & HISTORY SYNC
-    // ==========================================
-    async function syncHistoryFromSupabase() {
-        if (!supabaseClient || !historyTableBody) {
-            renderHistory();
-            return;
-        }
-
-        try {
-            const { data, error } = await supabaseClient
-                .from('blast_history')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (data && data.length > 0) {
-                localHistory = data.map(x => ({
-                    date: x.created_at.replace('T', ' ').substr(0, 16),
-                    total: x.total_recipients,
-                    success: x.success_count,
-                    failed: x.failed_count,
-                    delay: "Random Delay",
-                    status: x.status
-                }));
-                localStorage.setItem('saved_blast_history', JSON.stringify(localHistory));
-            }
-        } catch (e) {
-            console.warn("Gagal sync history Supabase:", e);
-        } finally {
-            renderHistory();
-        }
-    }
-
-    function renderHistory() {
-        if (!historyTableBody) return;
-        historyTableBody.innerHTML = '';
-
-        let totalTerkirimAll = 0;
-
-        localHistory.forEach(h => {
-            totalTerkirimAll += h.success;
-            const badgeColor = h.status === 'Success' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/20';
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="px-6 py-4">${h.date}</td>
-                <td class="px-6 py-4 font-semibold">${h.total}</td>
-                <td class="px-6 py-4 text-emerald-500 font-semibold">${h.success}</td>
-                <td class="px-6 py-4 text-rose-500 font-semibold">${h.failed}</td>
-                <td class="px-6 py-4 text-zinc-500">${h.delay}</td>
-                <td class="px-6 py-4 text-right">
-                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg ${badgeColor}">${h.status}</span>
-                </td>
-            `;
-            historyTableBody.appendChild(tr);
-        });
-
-        if (homeBlastTerkirim) homeBlastTerkirim.textContent = totalTerkirimAll;
-    }
-
-    if (btnSendBlastPremium) {
-        btnSendBlastPremium.addEventListener('click', async () => {
-            const rawTargets = targetNumbersInput.value.trim();
-            const savedToken = localStorage.getItem('saved_fonnte_token');
-
-            if (!savedToken) {
-                Swal.fire('Akses Ditolak', 'Masukkan Token Fonnte di menu Pengaturan terlebih dahulu.', 'warning');
+    // Fonnte API Key Save Settings
+    if (btnSaveFonnte) {
+        btnSaveFonnte.addEventListener('click', async () => {
+            const token = tokenInput.value.trim();
+            if (!token) {
+                Swal.fire('Oops!', 'Token API tidak boleh kosong', 'warning');
                 return;
             }
 
-            if (!rawTargets) {
-                Swal.fire('Perhatian', 'Nomor Target wajib diisi!', 'warning');
-                return;
-            }
+            btnSaveFonnte.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Menghubungkan...';
+            btnSaveFonnte.disabled = true;
 
-            const targets = rawTargets.split(',').map(n => n.trim()).filter(n => n.length > 0);
-            if (targets.length === 0) return;
+            try {
+                const response = await fetch("https://api.fonnte.com/device", {
+                    method: 'POST',
+                    headers: { 'Authorization': token }
+                });
+                const result = await response.json();
 
-            const variations = Array.from(document.querySelectorAll('.tpl-rotation-input'))
-                                    .map(textarea => textarea.value.trim())
-                                    .filter(val => val.length > 0);
-
-            const confirmRun = await Swal.fire({
-                title: 'Jalankan Campaign?',
-                text: `Sistem akan mengirim pesan ke ${targets.length} nomor.`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#18181b',
-                confirmButtonText: 'Ya, Jalankan'
-            });
-
-            if (!confirmRun.isConfirmed) return;
-
-            liveQueueBox.classList.remove('hidden');
-            btnSendBlastPremium.disabled = true;
-            btnSendBlastPremium.className = "w-full py-3.5 bg-rose-600 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2";
-            btnSendBlastPremium.innerHTML = '<i class="ph ph-stop"></i> Batalkan / Hentikan Campaign';
-
-            let success = 0;
-            let failed = 0;
-            statSuccessCount.textContent = '0';
-            statFailedCount.textContent = '0';
-            queueProgressBadge.textContent = `0 / ${targets.length}`;
-            queueProgressBar.style.width = '0%';
-
-            cancelCampaign = false;
-
-            const minDelay = parseInt(minDelayInput.value) || 15;
-            const maxDelay = parseInt(maxDelayInput.value) || 30;
-            const batchSize = parseInt(batchSizeInput.value) || 10;
-            const batchPause = parseInt(batchPauseInput.value) || 2;
-
-            const chkGreeting = document.getElementById('chkRandomGreeting').checked;
-            const chkEmoji = document.getElementById('chkRandomEmoji').checked;
-
-            statAvgDelay.textContent = `${Math.round((minDelay + maxDelay) / 2)}s`;
-
-            for (let i = 0; i < targets.length; i++) {
-                if (cancelCampaign) {
-                    break;
-                }
-
-                const currentTarget = targets[i];
-                queueSimulationText.innerHTML = `<i class="ph ph-sparkle text-indigo-500 animate-spin"></i> Mempersiapkan pesan ke ${currentTarget}...`;
-
-                const randomTplIndex = Math.floor(Math.random() * variations.length);
-                let baseMessage = variations[randomTplIndex];
-
-                if (chkGreeting) {
-                    const randomGreet = greetings[Math.floor(Math.random() * greetings.length)];
-                    baseMessage = `${randomGreet}\n\n${baseMessage}`;
-                }
-
-                if (chkEmoji) {
-                    const randomEmoji = randomEmojis[Math.floor(Math.random() * randomEmojis.length)];
-                    baseMessage = `${baseMessage} ${randomEmoji}`;
-                }
-
-                queueSimulationText.innerHTML = `<i class="ph ph-keyboard text-indigo-500 animate-pulse"></i> Mengetik pesan untuk ${currentTarget}...`;
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                const payload = new URLSearchParams();
-                payload.append('target', currentTarget);
-                payload.append('message', baseMessage);
-
-                try {
-                    const response = await fetch("https://api.fonnte.com/send", {
-                        method: 'POST',
-                        headers: { 'Authorization': savedToken },
-                        body: payload
+                if (result.status) {
+                    localStorage.setItem('saved_fonnte_token', token);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Terkoneksi!',
+                        text: `Device terhubung: ${result.name} (${result.device})`,
+                        confirmButtonColor: '#18181b'
                     });
-                    const result = await response.json();
-
-                    if (result.status) {
-                        success++;
-                        statSuccessCount.textContent = success;
-                    } else {
-                        failed++;
-                        statFailedCount.textContent = failed;
-                    }
-                } catch (err) {
-                    failed++;
-                    statFailedCount.textContent = failed;
+                } else {
+                    Swal.fire('Gagal', result.reason || 'Token tidak valid / Device Offline', 'error');
                 }
-
-                const processedCount = i + 1;
-                const progressPct = Math.round((processedCount / targets.length) * 100);
-                queueProgressBar.style.width = `${progressPct}%`;
-                queueProgressBadge.textContent = `${processedCount} / ${targets.length}`;
-
-                if (processedCount === targets.length) {
-                    queueSimulationText.innerHTML = `<i class="ph ph-check-circle text-emerald-500"></i> Selesai!`;
-                    break;
-                }
-
-                if (processedCount % batchSize === 0) {
-                    queueSimulationText.innerHTML = `<i class="ph ph-pause-circle text-amber-500 animate-pulse"></i> Jeda Batch aktif...`;
-                    let secondsLeft = batchPause * 60;
-                    while (secondsLeft > 0) {
-                        if (cancelCampaign) break;
-                        statEstTime.textContent = `${secondsLeft}s`;
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        secondsLeft--;
-                    }
-                    continue; 
-                }
-
-                const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-                let countdown = randomDelay;
-                while (countdown > 0) {
-                    if (cancelCampaign) break;
-                    queueSimulationText.innerHTML = `<i class="ph ph-hourglass-low text-indigo-500 animate-spin"></i> Jeda human-sleep: ${countdown}s`;
-                    statEstTime.textContent = `${countdown}s`;
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    countdown--;
-                }
+            } catch (error) {
+                Swal.fire('Error', 'Gagal menghubungi server Fonnte', 'error');
+            } finally {
+                btnSaveFonnte.innerHTML = '<i class="ph ph-arrows-clockwise"></i> Simpan & Test Koneksi';
+                btnSaveFonnte.disabled = false;
             }
-
-            const newHistoryItem = {
-                date: new Date().toISOString().replace('T', ' ').substr(0, 16),
-                total: targets.length,
-                success: success,
-                failed: failed,
-                delay: `${minDelay}s - ${maxDelay}s`,
-                status: cancelCampaign ? "Stopped" : "Success"
-            };
-
-            if (supabaseClient) {
-                try {
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    const userId = session ? session.user.id : null;
-
-                    await supabaseClient.from('blast_history').insert([{
-                        user_id: userId,
-                        total_recipients: targets.length,
-                        success_count: success,
-                        failed_count: failed,
-                        status: cancelCampaign ? "Stopped" : "Success"
-                    }]);
-                } catch (e) { console.error(e); }
-            }
-
-            localHistory.unshift(newHistoryItem);
-            localStorage.setItem('saved_blast_history', JSON.stringify(localHistory));
-            renderHistory();
-
-            btnSendBlastPremium.disabled = false;
-            btnSendBlastPremium.className = "w-full py-3.5 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 text-sm font-semibold rounded-xl flex items-center justify-center gap-2";
-            btnSendBlastPremium.innerHTML = '<i class="ph ph-rocket-launch"></i> Jalankan Anti-Ban Blast Campaign';
-            
-            Swal.fire({ icon: 'success', title: 'Blast Selesai!', text: `Terkirim: ${success}, Gagal: ${failed}.` });
         });
     }
 
-    document.addEventListener('click', (e) => {
-        if (e.target && e.target.id === 'btnSendBlast' && btnSendBlastPremium.disabled === true) {
-            cancelCampaign = true;
-        }
-    });
-
+    // Inisialisasi awal sinkronisasi data Supabase & Local
+    syncContactsFromSupabase();
+    renderTemplates();
+    populateBlastDropdown();
     syncHistoryFromSupabase();
-
-    // --- UTILS HELPER ---
-    function formatRupiah(number) {
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-    }
 });
