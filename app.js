@@ -1,7 +1,7 @@
-console.log("Sistem CRM Premium & WA Blast Engine aktif...");
+console.log("Sistem CRM Premium & WA Blast Engine v3.0 aktif...");
 
 // ==========================================
-// 1. INISIALISASI SUPABASE (SESUAI CREDENTIALS USER)
+// 1. INISIALISASI SUPABASE (DIAMANKAN DARI TABRAKAN VARIABEL GLOBAL)
 // ==========================================
 const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // MODULE: ADVANCED CRM CUSTOMER ENGINE (SINKRON SUPABASE 'contacts')
+    // MODULE: ADVANCED CRM CUSTOMER ENGINE (contacts)
     // ==========================================
     const crmTableBody = document.getElementById('crmTableBody');
     const crmEmptyState = document.getElementById('crmEmptyState');
@@ -199,7 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const crmStatDormant = document.getElementById('crmStatDormant');
     const crmStatLTV = document.getElementById('crmStatLTV');
 
-    // Default Fallback offline
+    const homeTotalContacts = document.getElementById('homeTotalContacts');
+
+    // Default Fallback
     const defaultCustomers = [
         { id: "17b354ca-fa2e-40dc-bc76-d183df592651", name: "Sarah Connor", phone: "6281234567890", tags: "VIP Customer, Hot Lead", transactions: 9500000, source: "Instagram", last_active: "2026-05-20", score: 85 },
         { id: "e6f4773c-ba32-47ef-bc90-9988ff77ea10", name: "John Doe", phone: "6281987654321", tags: "Warm Lead", transactions: 1200000, source: "Website Direct", last_active: "2026-05-15", score: 45 },
@@ -211,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedCRMIds = [];
     let currentViewingCustomerId = null;
 
-    // SINKRONISASI DATABASE SUPABASE DENGAN FALLBACK LOCALSTORAGE [1]
+    // SINKRONISASI DATABASE SUPABASE
     async function syncContactsFromSupabase() {
         if (!supabaseClient) {
             renderCRM();
@@ -219,7 +221,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // Ambil session user aktif agar data RLS terfilter sesuai pemilik [1]
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 renderCRM();
@@ -227,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const { data, error } = await supabaseClient
-                .from('contacts') // Menembak tabel contacts di ERD Anda [1]
+                .from('contacts') 
                 .select('*')
                 .order('created_at', { ascending: false });
 
@@ -367,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.isConfirmed) {
                     try {
                         if (supabaseClient) {
-                            await supabaseClient.from('contacts').delete().eq('id', id); // Sync delete Supabase [1]
+                            await supabaseClient.from('contacts').delete().eq('id', id);
                         }
                     } catch (e) { console.error(e); }
 
@@ -428,6 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
         crmStatDormant.textContent = dormant;
         crmStatLTV.textContent = formatRupiah(totalLtv);
 
+        if (homeTotalContacts) homeTotalContacts.textContent = total;
+
         if (badgeSegAll) badgeSegAll.textContent = total;
         if (badgeSegVip) badgeSegVip.textContent = crmData.filter(c => c.transactions > 5000000).length;
         if (badgeSegHot) badgeSegHot.textContent = hot;
@@ -474,8 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.isConfirmed) {
                 try {
                     if (supabaseClient) {
-                        // Bulk delete di Supabase
-                        await supabaseClient.from('contacts').delete().in('id', selectedCRMIds); [1]
+                        await supabaseClient.from('contacts').delete().in('id', selectedCRMIds);
                     }
                 } catch (e) { console.error(e); }
 
@@ -549,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- SMART IMPORT CSV/EXCEL (DENGAN SINKRON SUPABASE) ---
+    // --- SMART IMPORT CSV/EXCEL ---
     const importCRMExcel = document.getElementById('importCRMExcel');
     if (importCRMExcel) {
         importCRMExcel.addEventListener('change', (e) => {
@@ -566,7 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let addedCount = 0;
                 let mergedCount = 0;
 
-                // Dapatkan auth user ID saat ini [1]
                 let userId = null;
                 if (supabaseClient) {
                     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -583,7 +584,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (cleanPhone) {
                         const existingIdx = crmData.findIndex(x => x.phone === cleanPhone);
                         if (existingIdx !== -1) {
-                            // Merge
                             crmData[existingIdx].transactions += cleanLTV;
                             crmData[existingIdx].tags += `, ${cleanTags}`;
                             crmData[existingIdx].score = Math.min((crmData[existingIdx].score || 40) + 10, 100);
@@ -593,14 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                     transactions: crmData[existingIdx].transactions,
                                     tags: crmData[existingIdx].tags,
                                     score: crmData[existingIdx].score
-                                }).eq('id', crmData[existingIdx].id); [1]
+                                }).eq('id', crmData[existingIdx].id);
                             }
                             mergedCount++;
                         } else {
-                            // Insert Baru
                             const newId = 'cust-' + Date.now() + Math.random().toString(36).substr(2, 5);
                             const newContact = {
-                                id: supabaseClient ? undefined : newId, // UUID generate jika pakai Supabase
+                                id: supabaseClient ? undefined : newId,
                                 name: cleanName,
                                 phone: cleanPhone,
                                 tags: cleanTags,
@@ -608,11 +607,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 source: cleanSource,
                                 last_active: new Date().toISOString().split('T')[0],
                                 score: 50,
-                                user_id: userId // Inject user_id agar sesuai RLS [1]
+                                user_id: userId
                             };
 
                             if (supabaseClient) {
-                                const { data: dbData } = await supabaseClient.from('contacts').insert([newContact]).select(); [1]
+                                const { data: dbData } = await supabaseClient.from('contacts').insert([newContact]).select();
                                 if (dbData && dbData[0]) crmData.push(dbData[0]);
                             } else {
                                 crmData.push({ ...newContact, id: newId });
@@ -636,7 +635,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- NOTION-STYLE DETAIL DRAWER LOGIC (SINKRON CATATAN) ---
+    // --- NOTION-STYLE DETAIL DRAWER LOGIC ---
     async function openCustomerDrawer(id) {
         if (!customerDrawer) return;
         currentViewingCustomerId = id;
@@ -672,14 +671,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (btnCloseDrawer) btnCloseDrawer.addEventListener('click', closeCustomerDrawer);
 
-    // --- RENDERING TIMELINE DARI SUPABASE / LOCALSTORAGE ---
+    // --- RENDERING TIMELINE ---
     async function renderTimeline(cust) {
         if (!drawerTimeline) return;
         drawerTimeline.innerHTML = '';
 
         let savedNotes = [];
 
-        // Ambil catatan dari Supabase jika online [1]
         if (supabaseClient) {
             try {
                 const { data } = await supabaseClient
@@ -693,11 +691,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) { console.error(err); }
         }
 
-        // Fallback local storage jika catatan Supabase kosong
         if (savedNotes.length === 0) {
             const notesKey = `notes_${cust.id}`;
             savedNotes = JSON.parse(localStorage.getItem(notesKey)) || [
-                { date: cust.last_active || '2026-05-24', content: `Customer berhasil ditambahkan ke sistem via ${cust.source || 'Manual'}.` }
+                { date: cust.last_active || '2026-05-24', content: `Customer berhasil ditambahkan ke sistem.` }
             ];
         }
 
@@ -725,38 +722,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const custIdx = crmData.findIndex(x => x.id === currentViewingCustomerId);
             if (custIdx === -1) return;
 
-            // Naikkan Lead Score (+10 Poin)
             crmData[custIdx].score = Math.min((crmData[custIdx].score || 40) + 10, 100);
 
-            // Simpan catatan baru ke Supabase jika online [1]
             let userId = null;
             if (supabaseClient) {
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session) userId = session.user.id;
 
-                // Simpan Note ke Database Supabase [1]
                 if (noteText) {
                     await supabaseClient.from('customer_notes').insert([{
                         contact_id: currentViewingCustomerId,
                         user_id: userId,
                         content: noteText
-                    }]); [1]
+                    }]);
                 }
 
-                // Simpan Reminder ke Database Supabase [1]
                 if (reminderTime) {
                     await supabaseClient.from('follow_up_reminders').insert([{
                         contact_id: currentViewingCustomerId,
                         user_id: userId,
                         reminder_time: reminderTime
-                    }]); [1]
+                    }]);
                 }
 
-                // Update score kontak di Supabase [1]
-                await supabaseClient.from('contacts').update({ score: crmData[custIdx].score }).eq('id', currentViewingCustomerId); [1]
+                await supabaseClient.from('contacts').update({ score: crmData[custIdx].score }).eq('id', currentViewingCustomerId);
             }
 
-            // Sync Lokal Fallback
             const notesKey = `notes_${currentViewingCustomerId}`;
             const savedNotes = JSON.parse(localStorage.getItem(notesKey)) || [
                 { date: crmData[custIdx].last_active || '2026-05-24', content: `Customer berhasil ditambahkan ke sistem.` }
@@ -781,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- MANUAL CUSTOMER ADD & UPDATE MODAL ---
+    // --- MANUAL CUSTOMER ADD & UPDATE ---
     function openCustomerModal(id = null) {
         if (!customerModal) return;
         customerModal.classList.remove('hidden');
@@ -815,7 +806,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCloseCustModal) btnCloseCustModal.addEventListener('click', closeCustomerModal);
     if (custModalBackdrop) custModalBackdrop.addEventListener('click', closeCustomerModal);
 
-    // Realtime WhatsApp Number Validator
     const custPhone = document.getElementById('custPhone');
     if (custPhone) {
         custPhone.addEventListener('input', () => {
@@ -829,7 +819,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Form Submit (Simpan / Update)
     if (customerForm) {
         customerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -846,7 +835,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (session) userId = session.user.id;
             }
 
-            // Deteksi Duplikat Nomor
             const isDuplicate = crmData.some(x => x.phone === phone && x.id !== id);
             if (isDuplicate) {
                 const confirmMerge = await Swal.fire({
@@ -865,12 +853,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     crmData[targetIdx].score = Math.min((crmData[targetIdx].score || 40) + 15, 100);
                     
                     if (supabaseClient) {
-                        // Gabungkan di Supabase [1]
                         await supabaseClient.from('contacts').update({
                             transactions: crmData[targetIdx].transactions,
                             tags: crmData[targetIdx].tags,
                             score: crmData[targetIdx].score
-                        }).eq('id', crmData[targetIdx].id); [1]
+                        }).eq('id', crmData[targetIdx].id);
                     }
 
                     localStorage.setItem('saved_crm_data', JSON.stringify(crmData));
@@ -882,13 +869,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (id) {
-                // Update ke Supabase / Lokal
                 if (supabaseClient) {
-                    await supabaseClient.from('contacts').update({ name, phone, tags, transactions, source }).eq('id', id); [1]
+                    await supabaseClient.from('contacts').update({ name, phone, tags, transactions, source }).eq('id', id);
                 }
                 crmData = crmData.map(c => c.id === id ? { id, name, phone, tags, transactions, source, last_active: c.last_active, score: c.score } : c);
             } else {
-                // Tambah baru
                 const newContact = {
                     name,
                     phone,
@@ -897,11 +882,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     source,
                     score: 40,
                     last_active: new Date().toISOString().split('T')[0],
-                    user_id: userId // Sesuai RLS ERD Anda [1]
+                    user_id: userId
                 };
 
                 if (supabaseClient) {
-                    const { data, error } = await supabaseClient.from('contacts').insert([newContact]).select(); [1]
+                    const { data, error } = await supabaseClient.from('contacts').insert([newContact]).select();
                     if (data && data[0]) crmData.push(data[0]);
                 } else {
                     const newId = 'cust-' + Date.now();
@@ -924,8 +909,127 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Jalankan Sinkronisasi dari Supabase saat startup [1]
     syncContactsFromSupabase();
+
+    // ==========================================
+    // MODULE: CRUDS TEMPLATE PESAN
+    // ==========================================
+    const defaultTemplates = [
+        { id: "tpl-1", title: "Promo Akhir Bulan", category: "Promo", content: "Halo kak 👋 Ada promo terbaru hari ini.\n\nDapatkan diskon gila-gilaan akhir bulan up to 50% khusus produk terlaris kami!\n\nKlik link berikut untuk order: s.id/order-promo" },
+        { id: "tpl-2", title: "Reminder Tagihan", category: "Tagihan", content: "Hai kak 😊 Mau info promo spesial hari ini?\n\nKami ingin mengingatkan bahwa tagihan Anda bulan ini akan jatuh tempo dalam 3 hari lagi.\n\nSilakan abaikan pesan ini jika Anda sudah melakukan pembayaran." }
+    ];
+
+    let templates = JSON.parse(localStorage.getItem('saved_templates')) || defaultTemplates;
+
+    function renderTemplates() {
+        if (!templatesGrid || !templateEmptyState) return;
+        
+        if (templates.length === 0) {
+            templatesGrid.classList.add('hidden');
+            templateEmptyState.classList.remove('hidden');
+            return;
+        }
+
+        templateEmptyState.classList.add('hidden');
+        templatesGrid.classList.remove('hidden');
+        templatesGrid.innerHTML = '';
+
+        templates.forEach(tpl => {
+            const card = document.createElement('div');
+            card.className = "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 relative flex flex-col justify-between hover:shadow-md transition-shadow";
+            card.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start mb-2 gap-2">
+                        <h4 class="font-semibold text-zinc-900 dark:text-white truncate" title="${tpl.title}">${tpl.title}</h4>
+                        <span class="shrink-0 px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 rounded-md border border-zinc-200 dark:border-zinc-700 uppercase tracking-wider">${tpl.category}</span>
+                    </div>
+                    <p class="text-xs text-zinc-500 line-clamp-4 mt-2 whitespace-pre-line">${tpl.content}</p>
+                </div>
+                <div class="flex justify-between items-center border-t border-zinc-100 dark:border-zinc-800 pt-4 mt-4">
+                    <button class="btn-copy text-zinc-400 hover:text-zinc-900 dark:hover:text-white text-xs font-medium flex items-center gap-1 transition-colors" data-content="${encodeURIComponent(tpl.content)}">
+                        <i class="ph ph-copy"></i> Copy
+                    </button>
+                    <div class="flex items-center gap-2">
+                        <button class="btn-edit text-zinc-400 hover:text-indigo-500 p-1 transition-colors text-lg" data-id="${tpl.id}">
+                            <i class="ph ph-pencil-simple"></i>
+                        </button>
+                        <button class="btn-delete text-zinc-400 hover:text-red-500 p-1 transition-colors text-lg" data-id="${tpl.id}">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            templatesGrid.appendChild(card);
+        });
+
+        document.querySelectorAll('.btn-copy').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const textToCopy = decodeURIComponent(e.currentTarget.getAttribute('data-content'));
+                navigator.clipboard.writeText(textToCopy);
+                Swal.fire({ icon: 'success', title: 'Berhasil di-copy!', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+            });
+        });
+
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                openModal(id);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                const result = await Swal.fire({
+                    title: 'Hapus template?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33'
+                });
+
+                if (result.isConfirmed) {
+                    templates = templates.filter(t => t.id !== id);
+                    localStorage.setItem('saved_templates', JSON.stringify(templates));
+                    renderTemplates();
+                    populateBlastDropdown();
+                    Swal.fire('Terhapus!', 'Template berhasil dihapus.', 'success');
+                }
+            });
+        });
+    }
+
+    function populateBlastDropdown() {
+        if (!blastTemplateSelect) return;
+        const currentValue = blastTemplateSelect.value;
+        blastTemplateSelect.innerHTML = '<option value="">Pilih Template...</option>';
+        
+        templates.forEach(tpl => {
+            const option = document.createElement('option');
+            option.value = tpl.id;
+            option.textContent = `${tpl.title} (${tpl.category})`;
+            blastTemplateSelect.appendChild(option);
+        });
+        blastTemplateSelect.value = currentValue;
+    }
+
+    if (blastTemplateSelect) {
+        blastTemplateSelect.addEventListener('change', () => {
+            const selectedId = blastTemplateSelect.value;
+            if (selectedId) {
+                const selectedTpl = templates.find(t => t.id === selectedId);
+                if (selectedTpl) {
+                    const firstInput = document.querySelector('.tpl-rotation-input');
+                    if (firstInput) {
+                        firstInput.value = selectedTpl.content;
+                        firstInput.dispatchEvent(new Event('input'));
+                    }
+                }
+            }
+        });
+    }
+
+    renderTemplates();
+    populateBlastDropdown();
 
     // ==========================================
     // MODULE: ADVANCED ANTI-BAN ENGINE LOGIC
@@ -936,24 +1040,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetNumbersInput = document.getElementById('targetNumbers');
     const targetCounter = document.getElementById('targetCounter');
 
-    // Anti-Spam Keywords
     const spamKeywords = ['GRATIS!!!', 'CUAN BESAR', 'KLIK SEKARANG', 'SLOT', 'PINJOL', 'PROMO GILA', 'MENANG BANYAK'];
-
-    // Sapaan / Greetings Acak
-    const greetings = [
-        "Halo kak 👋",
-        "Hai kak 😊",
-        "Selamat pagi kak ☀️",
-        "Selamat siang kak 👋",
-        "Selamat sore kak ☕",
-        "Sore kak 😊",
-        "Hallo kak ✨"
-    ];
-
-    // Emojis Acak
+    const greetings = ["Halo kak 👋", "Hai kak 😊", "Selamat pagi kak ☀️", "Selamat siang kak 👋", "Selamat sore kak ☕", "Sore kak 😊", "Hallo kak ✨"];
     const randomEmojis = ["👋", "😊", "✨", "🔥", "👍", "☀️", "🙏", "⚡", "🚀"];
 
-    // Update Counter Target Nomor Terdeteksi
     if (targetNumbersInput) {
         targetNumbersInput.addEventListener('input', () => {
             const raw = targetNumbersInput.value.trim();
@@ -966,8 +1056,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fungsi menambahkan input variasi template pesan
     function addVariationInput(initialContent = '') {
+        if (!variationContainer) return;
         const index = variationContainer.children.length + 1;
         const div = document.createElement('div');
         div.className = "relative group flex items-start gap-2 bg-zinc-50 dark:bg-zinc-800/40 p-3.5 rounded-xl border border-zinc-100 dark:border-zinc-800 transition-all";
@@ -982,13 +1072,11 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         variationContainer.appendChild(div);
 
-        // Scan Konten untuk Deteksi Kata Spam
         const textarea = div.querySelector('.tpl-rotation-input');
         textarea.addEventListener('input', () => {
             scanForSpamContent();
         });
 
-        // Event hapus input
         div.querySelector('.btn-remove-variation').addEventListener('click', () => {
             if (variationContainer.children.length > 1) {
                 div.remove();
@@ -1001,12 +1089,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function reindexVariationLabels() {
+        if (!variationContainer) return;
         Array.from(variationContainer.children).forEach((child, index) => {
             child.querySelector('span').textContent = `Variasi Template #${index + 1}`;
         });
     }
 
-    // Pendeteksi Konten Spam Realtime
     function scanForSpamContent() {
         let isSpamFound = false;
         const textareas = document.querySelectorAll('.tpl-rotation-input');
@@ -1021,15 +1109,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (isSpamFound) {
-            spamWarningBox.classList.remove('hidden');
+            if (spamWarningBox) spamWarningBox.classList.remove('hidden');
             updateDeviceHealth('warning');
         } else {
-            spamWarningBox.classList.add('hidden');
+            if (spamWarningBox) spamWarningBox.classList.add('hidden');
             updateDeviceHealth('safe');
         }
     }
 
-    // Inisialisasi awal variasi template acak
     if (btnAddNewVariation) {
         btnAddNewVariation.addEventListener('click', () => {
             if (variationContainer.children.length < 5) {
@@ -1040,7 +1127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Tambah variasi default pertama
     addVariationInput("Halo kak, kami ada penawaran menarik khusus hari ini!");
 
     // --- LOGIKA SETTING PRESET ANTI-BAN ---
@@ -1055,6 +1141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const presetDesc = document.getElementById('presetDescription');
 
     function selectPreset(mode) {
+        if (!presetSafe) return;
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.classList.remove('active', 'bg-zinc-900', 'text-white', 'dark:bg-white', 'dark:text-zinc-950', 'border-zinc-900', 'dark:border-white');
             btn.classList.add('border-zinc-200', 'dark:border-zinc-800', 'text-zinc-700', 'dark:text-zinc-300');
@@ -1069,21 +1156,21 @@ document.addEventListener('DOMContentLoaded', () => {
             maxDelayInput.value = 60;
             batchSizeInput.value = 15;
             batchPauseInput.value = 3;
-            presetDesc.textContent = "Mode Safe: Delay panjang (30-60 detik) dengan jeda batch ketat. Sangat direkomendasikan untuk menghindari filter bot.";
+            presetDesc.textContent = "Mode Safe: Delay panjang (30-60 detik) dengan jeda batch ketat. Sangat direkomendasikan.";
             updateDeviceHealth('safe');
         } else if (mode === 'Normal') {
             minDelayInput.value = 15;
             maxDelayInput.value = 30;
             batchSizeInput.value = 30;
             batchPauseInput.value = 2;
-            presetDesc.textContent = "Mode Normal: Kecepatan pengiriman sedang (15-30 detik). Sesuai untuk nomor WhatsApp yang sudah aktif berinteraksi.";
+            presetDesc.textContent = "Mode Normal: Kecepatan pengiriman sedang (15-30 detik). Sesuai untuk nomor yang sudah hangat.";
             updateDeviceHealth('normal');
         } else if (mode === 'Fast') {
             minDelayInput.value = 5;
             maxDelayInput.value = 15;
             batchSizeInput.value = 50;
             batchPauseInput.value = 1;
-            presetDesc.textContent = "Mode Fast: Pengiriman cepat (5-15 detik). Memiliki risiko ban sangat tinggi jika dikirim ke nomor non-kontak.";
+            presetDesc.textContent = "Mode Fast: Pengiriman cepat (5-15 detik). Memiliki risiko ban sangat tinggi.";
             updateDeviceHealth('high_risk');
         }
     }
@@ -1113,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- DEVICE HEALTH STATUS MODIFIER ---
+    // --- DEVICE HEALTH STATUS ---
     const deviceHealthWidget = document.getElementById('deviceHealthWidget');
     const deviceHealthIcon = document.getElementById('deviceHealthIcon');
     const deviceHealthTitle = document.getElementById('deviceHealthTitle');
@@ -1164,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // MODULE: CORE QUEUE CAMPAIGN RUNNER (ANTI-BAN)
+    // MODULE: CORE QUEUE CAMPAIGN RUNNER & HISTORY SYNC
     // ==========================================
     const btnSendBlastPremium = document.getElementById('btnSendBlast');
     const liveQueueBox = document.getElementById('liveQueueBox');
@@ -1177,7 +1264,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const statEstTime = document.getElementById('statEstTime');
     const statAvgDelay = document.getElementById('statAvgDelay');
 
+    const historyTableBody = document.getElementById('historyTableBody');
+    const homeBlastTerkirim = document.getElementById('homeBlastTerkirim');
+
     let cancelCampaign = false;
+    let localHistory = JSON.parse(localStorage.getItem('saved_blast_history')) || [
+        { date: "2026-05-23 14:30", total: 150, success: 148, failed: 2, delay: "30s - 60s", status: "Success" }
+    ];
+
+    async function syncHistoryFromSupabase() {
+        if (!supabaseClient || !historyTableBody) {
+            renderHistory();
+            return;
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('blast_history')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (data && data.length > 0) {
+                localHistory = data.map(x => ({
+                    date: x.created_at.replace('T', ' ').substr(0, 16),
+                    total: x.total_recipients,
+                    success: x.success_count,
+                    failed: x.failed_count,
+                    delay: "Random Delay",
+                    status: x.status
+                }));
+                localStorage.setItem('saved_blast_history', JSON.stringify(localHistory));
+            }
+        } catch (e) {
+            console.warn("Gagal sync history Supabase:", e);
+        } finally {
+            renderHistory();
+        }
+    }
+
+    function renderHistory() {
+        if (!historyTableBody) return;
+        historyTableBody.innerHTML = '';
+
+        let totalTerkirimAll = 0;
+
+        localHistory.forEach(h => {
+            totalTerkirimAll += h.success;
+            const badgeColor = h.status === 'Success' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20' : 'bg-rose-50 text-rose-600 dark:bg-rose-950/20';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="px-6 py-4">${h.date}</td>
+                <td class="px-6 py-4 font-semibold">${h.total}</td>
+                <td class="px-6 py-4 text-emerald-500 font-semibold">${h.success}</td>
+                <td class="px-6 py-4 text-rose-500 font-semibold">${h.failed}</td>
+                <td class="px-6 py-4 text-zinc-500">${h.delay}</td>
+                <td class="px-6 py-4 text-right">
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-lg ${badgeColor}">${h.status}</span>
+                </td>
+            `;
+            historyTableBody.appendChild(tr);
+        });
+
+        if (homeBlastTerkirim) homeBlastTerkirim.textContent = totalTerkirimAll;
+    }
 
     if (btnSendBlastPremium) {
         btnSendBlastPremium.addEventListener('click', async () => {
@@ -1195,23 +1345,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const targets = rawTargets.split(',').map(n => n.trim()).filter(n => n.length > 0);
-            if (targets.length === 0) {
-                Swal.fire('Perhatian', 'Tidak ditemukan nomor target valid!', 'warning');
-                return;
-            }
+            if (targets.length === 0) return;
 
             const variations = Array.from(document.querySelectorAll('.tpl-rotation-input'))
                                     .map(textarea => textarea.value.trim())
                                     .filter(val => val.length > 0);
 
-            if (variations.length === 0) {
-                Swal.fire('Perhatian', 'Tulis variasi pesan minimal 1 template!', 'warning');
-                return;
-            }
-
             const confirmRun = await Swal.fire({
-                title: 'Jalankan Campaign Anti-Ban?',
-                text: `Sistem akan mengirim pesan ke ${targets.length} nomor dengan parameter acak secara bergantian.`,
+                title: 'Jalankan Campaign?',
+                text: `Sistem akan mengirim pesan ke ${targets.length} nomor.`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#18181b',
@@ -1222,7 +1364,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             liveQueueBox.classList.remove('hidden');
             btnSendBlastPremium.disabled = true;
-            btnSendBlastPremium.className = "w-full py-3.5 bg-rose-600 text-white text-sm font-semibold rounded-xl shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2";
+            btnSendBlastPremium.className = "w-full py-3.5 bg-rose-600 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2";
             btnSendBlastPremium.innerHTML = '<i class="ph ph-stop"></i> Batalkan / Hentikan Campaign';
 
             let success = 0;
@@ -1246,7 +1388,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             for (let i = 0; i < targets.length; i++) {
                 if (cancelCampaign) {
-                    Swal.fire('Dibatalkan', 'Campaign berhasil dihentikan oleh pengguna.', 'info');
                     break;
                 }
 
@@ -1267,7 +1408,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 queueSimulationText.innerHTML = `<i class="ph ph-keyboard text-indigo-500 animate-pulse"></i> Mengetik pesan untuk ${currentTarget}...`;
-                await new Promise(resolve => setTimeout(resolve, 2500));
+                await new Promise(resolve => setTimeout(resolve, 2000));
 
                 const payload = new URLSearchParams();
                 payload.append('target', currentTarget);
@@ -1299,13 +1440,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 queueProgressBadge.textContent = `${processedCount} / ${targets.length}`;
 
                 if (processedCount === targets.length) {
-                    queueSimulationText.innerHTML = `<i class="ph ph-check-circle text-emerald-500"></i> Selesai! Campaign berhasil dikirim.`;
+                    queueSimulationText.innerHTML = `<i class="ph ph-check-circle text-emerald-500"></i> Selesai!`;
                     break;
                 }
 
                 if (processedCount % batchSize === 0) {
-                    queueSimulationText.innerHTML = `<i class="ph ph-pause-circle text-amber-500 animate-pulse"></i> Jeda Batch aktif... Menunggu ${batchPause} menit sebelum batch baru.`;
-                    
+                    queueSimulationText.innerHTML = `<i class="ph ph-pause-circle text-amber-500 animate-pulse"></i> Jeda Batch aktif...`;
                     let secondsLeft = batchPause * 60;
                     while (secondsLeft > 0) {
                         if (cancelCampaign) break;
@@ -1318,41 +1458,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
                 let countdown = randomDelay;
-                
                 while (countdown > 0) {
                     if (cancelCampaign) break;
-                    queueSimulationText.innerHTML = `<i class="ph ph-hourglass-low text-indigo-500 animate-spin"></i> Jeda human-sleep: Menunggu ${countdown}s sebelum lanjut ke target berikutnya...`;
+                    queueSimulationText.innerHTML = `<i class="ph ph-hourglass-low text-indigo-500 animate-spin"></i> Jeda human-sleep: ${countdown}s`;
                     statEstTime.textContent = `${countdown}s`;
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     countdown--;
                 }
             }
 
+            // SIMPAN RIWAYAT KE DATABASE SUPABASE & LOKAL [1]
+            const newHistoryItem = {
+                date: new Date().toISOString().replace('T', ' ').substr(0, 16),
+                total: targets.length,
+                success: success,
+                failed: failed,
+                delay: `${minDelay}s - ${maxDelay}s`,
+                status: cancelCampaign ? "Stopped" : "Success"
+            };
+
+            if (supabaseClient) {
+                try {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    const userId = session ? session.user.id : null;
+
+                    await supabaseClient.from('blast_history').insert([{
+                        user_id: userId,
+                        total_recipients: targets.length,
+                        success_count: success,
+                        failed_count: failed,
+                        status: cancelCampaign ? "Stopped" : "Success"
+                    }]);
+                } catch (e) { console.error(e); }
+            }
+
+            localHistory.unshift(newHistoryItem);
+            localStorage.setItem('saved_blast_history', JSON.stringify(localHistory));
+            renderHistory();
+
             btnSendBlastPremium.disabled = false;
-            btnSendBlastPremium.className = "w-full py-3.5 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 text-sm font-semibold rounded-xl shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2";
+            btnSendBlastPremium.className = "w-full py-3.5 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 text-sm font-semibold rounded-xl flex items-center justify-center gap-2";
             btnSendBlastPremium.innerHTML = '<i class="ph ph-rocket-launch"></i> Jalankan Anti-Ban Blast Campaign';
             
-            if (!cancelCampaign) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Blast Selesai!',
-                    text: `Campaign rampung. Terkirim: ${success}, Gagal: ${failed}.`,
-                    confirmButtonColor: '#18181b'
-                });
-            }
+            Swal.fire({ icon: 'success', title: 'Blast Selesai!', text: `Terkirim: ${success}, Gagal: ${failed}.` });
         });
     }
 
     document.addEventListener('click', (e) => {
         if (e.target && e.target.id === 'btnSendBlast' && btnSendBlastPremium.disabled === true) {
             cancelCampaign = true;
-            queueSimulationText.innerHTML = `<i class="ph ph-x-circle text-rose-500"></i> Membatalkan pengiriman...`;
         }
     });
+
+    syncHistoryFromSupabase();
 
     // --- UTILS HELPER ---
     function formatRupiah(number) {
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
     }
-
-}); // Penutup DOMContentLoaded
+});
