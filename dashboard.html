@@ -514,7 +514,7 @@
         </div>
     </main>
 
-    <!-- STICKY BULK ACTIONS TOOLBAR (Floating Black Bar) -->
+    <!-- STICKY BULK ACTIONS TOOLBAR -->
     <div id="stickyBulkToolbar" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-6 z-50 border border-zinc-800 dark:border-zinc-200 transition-all duration-300 transform translate-y-24 opacity-0">
         <span class="text-xs font-semibold" id="txtBulkSelectedCount">0 Selected</span>
         <div class="h-4 w-px bg-zinc-700 dark:bg-zinc-300"></div>
@@ -525,7 +525,7 @@
         </div>
     </div>
 
-    <!-- NOTION-STYLE SLIDE-OVER DRAWER (CUSTOMER DETAIL & TIMELINE) -->
+    <!-- NOTION-STYLE SLIDE-OVER DRAWER -->
     <div id="customerDrawer" class="fixed inset-y-0 right-0 w-full max-w-lg bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 z-[100] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
         <!-- Drawer Header -->
         <div class="p-6 border-b border-zinc-150 dark:border-zinc-800 flex items-center justify-between">
@@ -539,9 +539,8 @@
             <button id="btnCloseDrawer" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white text-xl"><i class="ph ph-x"></i></button>
         </div>
 
-        <!-- Drawer Content (Scrollable) -->
+        <!-- Drawer Content -->
         <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-            <!-- Analytics Overview -->
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-zinc-50 dark:bg-zinc-800/40 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800">
                     <span class="text-[10px] text-zinc-400 uppercase font-bold block">Lifetime Value (CLV)</span>
@@ -559,7 +558,6 @@
                 <div class="space-y-2">
                     <textarea id="drawerNoteInput" rows="2" class="w-full p-3 text-xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-1 focus:ring-zinc-900 outline-none text-zinc-900 dark:text-white resize-none" placeholder="Tulis catatan penting / hasil follow-up disini..."></textarea>
                     <div class="flex justify-between items-center gap-2">
-                        <!-- Reminder Date Scheduler -->
                         <div class="flex items-center gap-1.5 text-xs text-zinc-500">
                             <i class="ph ph-bell"></i>
                             <input type="datetime-local" id="drawerReminderTime" class="bg-transparent border-none outline-none font-medium focus:underline cursor-pointer">
@@ -569,17 +567,17 @@
                 </div>
             </div>
 
-            <!-- Modern Timeline Activity -->
+            <!-- Timeline -->
             <div class="space-y-3">
                 <h4 class="font-semibold text-sm">Customer Activity Timeline</h4>
                 <div id="drawerTimeline" class="space-y-4 border-l border-zinc-200 dark:border-zinc-800 ml-3 pl-4 relative">
-                    <!-- Dynamic timeline elements go here -->
+                    <!-- Dynamic timeline elements -->
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL POPUP: TAMBAH CUSTOMER MANUAL (DENGAN DETEKSI DUPLIKAT & VALIDASI WA) -->
+    <!-- MODAL POPUP: TAMBAH CUSTOMER MANUAL -->
     <div id="customerModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="custModalBackdrop"></div>
         <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-md p-6 relative z-10 mx-4 shadow-xl">
@@ -616,34 +614,7 @@
         </div>
     </div>
 
-    <!-- Modal Form Tambah/Edit Template -->
-    <div id="templateModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="modalBackdrop"></div>
-        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-lg p-6 relative z-10 mx-4 shadow-xl">
-            <h3 id="modalTemplateTitle" class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Tambah Template Baru</h3>
-            <form id="templateForm" class="space-y-4">
-                <input type="hidden" id="templateId">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Nama / Judul Template</label>
-                    <input type="text" id="tplTitle" required class="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" placeholder="Contoh: Promo Akhir Bulan">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Kategori / Tag</label>
-                    <input type="text" id="tplCategory" required class="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" placeholder="Contoh: Promo, Tagihan, Broadcast">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Isi Pesan Template</label>
-                    <textarea id="tplContent" required rows="6" class="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm resize-none text-zinc-900 dark:text-white" placeholder="Halo {name}, dapatkan penawaran spesial..."></textarea>
-                </div>
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" id="btnCloseTemplateModal" class="px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800">Batal</button>
-                    <button type="submit" class="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium px-4 py-2 rounded-xl">Simpan Template</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- JavaScript Loader -->
-    <script src="app.js?v=3.0"></script>
+    <script src="app.js?v=3.1"></script>
 </body>
 </html>
