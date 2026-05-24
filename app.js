@@ -1,31 +1,39 @@
 console.log("Sistem App.js mulai dimuat...");
 
 // ==========================================
-// 1. INISIALISASI SUPABASE & PROTEKSI LOGIN
+// 1. INISIALISASI SUPABASE (NAMA VARIABEL DIUBAH AGAR TIDAK TABRAKAN)
 // ==========================================
 const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
 
-// Cek apakah Supabase sudah dimuat dari CDN
-let supabase;
-if (window.supabase) {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-} else {
-    console.warn("Supabase CDN belum dimuat di HTML!");
+// Nama variabel diganti menjadi supabaseClient untuk menghindari SyntaxError
+let supabaseClient = null;
+
+try {
+    // Memanggil library utama dari window.supabase (bawaan CDN)
+    if (window.supabase) {
+        supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        console.log("Supabase Client berhasil diinisialisasi.");
+    } else {
+        console.warn("Library Supabase dari CDN tidak terdeteksi.");
+    }
+} catch (error) {
+    console.error("Gagal menginisialisasi Supabase:", error);
 }
 
 // Fungsi Proteksi: Tendang ke halaman login jika belum login
 async function checkAuth() {
-    if (!supabase) return;
+    if (!supabaseClient) return;
     try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) {
             window.location.href = 'index.html';
         }
     } catch (error) {
-        console.warn("Gagal mengecek session auth, jalankan mode offline.");
+        console.warn("Gagal mengecek session auth, menjalankan mode offline.");
     }
 }
+
 // Jalankan pengecekan keamanan saat file dimuat (Khusus untuk dashboard.html)
 if (window.location.pathname.includes('dashboard.html')) {
     checkAuth();
@@ -51,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (result.isConfirmed) {
-                if(supabase) await supabase.auth.signOut();
+                if (supabaseClient) await supabaseClient.auth.signOut();
                 window.location.href = 'index.html';
             }
         });
