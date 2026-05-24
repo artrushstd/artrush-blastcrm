@@ -2,8 +2,8 @@
 // 1. INISIALISASI SUPABASE & PROTEKSI LOGIN
 // ==========================================
 // PENTING: Ganti dengan URL dan Key Anda sendiri!
-const supabaseUrl = 'https://PROJECT_ANDA.supabase.co';
-const supabaseKey = 'ANON_KEY_ANDA';
+const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
 
 // Cek apakah Supabase sudah dimuat dari CDN
 let supabase;
