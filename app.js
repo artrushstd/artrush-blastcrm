@@ -385,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DEBOUNCE SEARCH ---
-    let searchTimeout;
     if (crmSearch) {
         crmSearch.addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -806,7 +805,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnCloseCustModal) btnCloseCustModal.addEventListener('click', closeCustomerModal);
     if (custModalBackdrop) custModalBackdrop.addEventListener('click', closeCustomerModal);
 
-    const custPhone = document.getElementById('custPhone');
     if (custPhone) {
         custPhone.addEventListener('input', () => {
             const raw = custPhone.value.trim();
@@ -887,7 +885,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (supabaseClient) {
                     const { data, error } = await supabaseClient.from('contacts').insert([newContact]).select();
-                    if (data && data[0]) crmData.push(data[0]);
+                    if (data && data[0]) {
+                        crmData.push(data[0]);
+                    } else if (error) {
+                        console.error("Gagal simpan ke Supabase contacts:", error);
+                    }
                 } else {
                     const newId = 'cust-' + Date.now();
                     crmData.push({ ...newContact, id: newId });
@@ -912,14 +914,23 @@ document.addEventListener('DOMContentLoaded', () => {
     syncContactsFromSupabase();
 
     // ==========================================
-    // MODULE: CRUDS TEMPLATE PESAN
+    // MODULE: CRUDS TEMPLATE PESAN (DIRESTRUKTURISASI VARIABEL-VARIABELNYA)
     // ==========================================
-    const defaultTemplates = [
-        { id: "tpl-1", title: "Promo Akhir Bulan", category: "Promo", content: "Halo kak 👋 Ada promo terbaru hari ini.\n\nDapatkan diskon gila-gilaan akhir bulan up to 50% khusus produk terlaris kami!\n\nKlik link berikut untuk order: s.id/order-promo" },
-        { id: "tpl-2", title: "Reminder Tagihan", category: "Tagihan", content: "Hai kak 😊 Mau info promo spesial hari ini?\n\nKami ingin mengingatkan bahwa tagihan Anda bulan ini akan jatuh tempo dalam 3 hari lagi.\n\nSilakan abaikan pesan ini jika Anda sudah melakukan pembayaran." }
-    ];
-
-    let templates = JSON.parse(localStorage.getItem('saved_templates')) || defaultTemplates;
+    // PENYEBAB ERROR 'blastTemplateSelect is not defined' DI SINI SUDAH DIPERBAIKI (Variabel dideklarasikan ulang) [1]:
+    const templatesGrid = document.getElementById('templatesGrid');
+    const templateEmptyState = document.getElementById('templateEmptyState');
+    const blastTemplateSelect = document.getElementById('blastTemplateSelect');
+    
+    const templateModal = document.getElementById('templateModal');
+    const templateForm = document.getElementById('templateForm');
+    const btnOpenTemplateModal = document.getElementById('btnOpenTemplateModal');
+    const btnCloseTemplateModal = document.getElementById('btnCloseTemplateModal');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    
+    const templateIdInput = document.getElementById('templateId');
+    const tplTitleInput = document.getElementById('tplTitle');
+    const tplCategoryInput = document.getElementById('tplCategory');
+    const tplContentInput = document.getElementById('tplContent');
 
     function renderTemplates() {
         if (!templatesGrid || !templateEmptyState) return;
@@ -1030,6 +1041,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderTemplates();
     populateBlastDropdown();
+
+    function openModal(id = null) {
+        if (!templateModal) return;
+        templateModal.classList.remove('hidden');
+
+        if (id) {
+            const tpl = templates.find(t => t.id === id);
+            if (tpl) {
+                document.getElementById('modalTemplateTitle').innerText = "Edit Template Pesan";
+                templateIdInput.value = tpl.id;
+                tplTitleInput.value = tpl.title;
+                tplCategoryInput.value = tpl.category;
+                tplContentInput.value = tpl.content;
+            }
+        } else {
+            document.getElementById('modalTemplateTitle').innerText = "Tambah Template Baru";
+            templateForm.reset();
+            templateIdInput.value = '';
+        }
+    }
+
+    function closeModal() {
+        if (templateModal) templateModal.classList.add('hidden');
+    }
+
+    if (btnOpenTemplateModal) btnOpenTemplateModal.addEventListener('click', () => openModal());
+    if (btnCloseTemplateModal) btnCloseTemplateModal.addEventListener('click', closeModal);
+    if (modalBackdrop) modalBackdrop.addEventListener('click', closeModal);
+
+    if (templateForm) {
+        templateForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = templateIdInput.value;
+            const title = tplTitleInput.value.trim();
+            const category = tplCategoryInput.value.trim();
+            const content = tplContentInput.value.trim();
+
+            if (id) {
+                templates = templates.map(t => t.id === id ? { id, title, category, content } : t);
+            } else {
+                const newId = 'tpl-' + Date.now();
+                templates.push({ id: newId, title, category, content });
+            }
+
+            localStorage.setItem('saved_templates', JSON.stringify(templates));
+            renderTemplates();
+            populateBlastDropdown();
+            closeModal();
+
+            Swal.fire({
+                icon: 'success',
+                title: id ? 'Template Diperbarui!' : 'Template Ditambahkan!',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        });
+    }
 
     // ==========================================
     // MODULE: ADVANCED ANTI-BAN ENGINE LOGIC
@@ -1467,7 +1537,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // SIMPAN RIWAYAT KE DATABASE SUPABASE & LOKAL [1]
             const newHistoryItem = {
                 date: new Date().toISOString().replace('T', ' ').substr(0, 16),
                 total: targets.length,
