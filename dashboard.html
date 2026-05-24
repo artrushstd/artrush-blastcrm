@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - WA Blast CRM</title>
+    <title>Dashboard Premium - WA Blast CRM</title>
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <script>
@@ -26,7 +28,7 @@
     <aside class="fixed inset-y-0 left-0 w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 z-50 hidden md:flex flex-col transition-all">
         <div class="h-16 flex items-center px-6 border-b border-zinc-200 dark:border-zinc-800">
             <i class="ph ph-paper-plane-tilt text-2xl font-bold mr-2"></i>
-            <span class="font-bold tracking-tight text-lg">WA Blast</span>
+            <span class="font-bold tracking-tight text-lg">WA Blast <span class="text-xs bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-1.5 py-0.5 rounded ml-1 font-mono">PRO</span></span>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
             <a href="javascript:void(0)" data-target="home" class="nav-item active flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-zinc-900 bg-zinc-100 dark:bg-zinc-800 dark:text-white">
@@ -96,11 +98,11 @@
                         <span class="text-3xl font-bold tracking-tight">8,592</span>
                     </div>
                     <div class="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col">
-                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-calendar-check"></i> Pesan Hari Ini</span>
-                        <span class="text-3xl font-bold tracking-tight text-indigo-500">42</span>
+                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-shield-alert"></i> Spam Risk Level</span>
+                        <span id="homeSpamRiskBadge" class="text-xl font-bold tracking-tight text-emerald-500 mt-1">SANGAT AMAN</span>
                     </div>
                     <div class="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col">
-                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-device-mobile"></i> Status Fonnte</span>
+                        <span class="text-zinc-500 dark:text-zinc-400 text-sm font-medium mb-1 flex items-center gap-2"><i class="ph ph-device-mobile"></i> Status Device</span>
                         <span class="text-lg font-bold tracking-tight text-emerald-500 flex items-center gap-2 mt-1"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span> Connected</span>
                     </div>
                 </div>
@@ -166,55 +168,219 @@
                 </div>
             </section>
 
-            <!-- SECTION: WA Blast -->
-            <section id="blast" class="view-section hidden max-w-4xl mx-auto">
-                <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-6 md:p-8 space-y-8">
-                        <div>
-                            <h3 class="text-lg font-semibold mb-1">Kirim Pesan Massal</h3>
-                            <p class="text-sm text-zinc-500">Pastikan Token API Fonnte Anda sudah disetting di menu Pengaturan.</p>
-                        </div>
-                        
-                        <div class="space-y-5">
-                            <!-- Input Nomor Manual untuk Testing -->
+            <!-- SECTION: Template Pesan -->
+            <section id="templates" class="view-section hidden">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-1">Template Pesan</h3>
+                        <p class="text-sm text-zinc-500">Buat template pesan untuk memudahkan pengiriman pesan massal.</p>
+                    </div>
+                    <button id="btnOpenTemplateModal" class="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium px-4 py-2.5 rounded-xl shadow-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+                        <i class="ph ph-plus"></i> Tambah Template
+                    </button>
+                </div>
+
+                <!-- Empty State (Muncul jika belum ada template) -->
+                <div id="templateEmptyState" class="empty-state py-12 flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl">
+                    <i class="ph ph-chat-text text-4xl text-zinc-300 dark:text-zinc-700 mb-3"></i>
+                    <p class="text-zinc-500 text-sm">Belum ada template pesan yang dibuat.</p>
+                </div>
+
+                <!-- Grid Tampilan Template Card -->
+                <div id="templatesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 hidden">
+                    <!-- Cards akan di-render secara dinamis lewat JS -->
+                </div>
+            </section>
+
+            <!-- SECTION: WA Blast (PREMIUM ANTI-BAN ENGINE) -->
+            <section id="blast" class="view-section hidden max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    <!-- Left Side: Campaign Composer -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 md:p-8 space-y-6">
                             <div>
-                                <label class="block text-sm font-medium mb-2">Nomor Target WhatsApp</label>
-                                <input type="text" id="targetNumbers" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm transition-all" placeholder="Contoh: 08123456789, 08987654321">
-                                <p class="text-xs text-zinc-500 mt-2">Pisahkan dengan koma ( , ) jika lebih dari 1 nomor.</p>
-                            </div>
-                            
-                            <div>
-                                <div class="flex justify-between items-end mb-2">
-                                    <label class="block text-sm font-medium">Template Pesan (Opsional)</label>
-                                    <button class="text-xs text-indigo-500 font-medium">Kelola Template</button>
-                                </div>
-                                <select class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm appearance-none">
-                                    <option>Pilih Template...</option>
-                                    <option>Promo Akhir Bulan</option>
-                                    <option>Reminder Tagihan</option>
-                                </select>
+                                <h3 class="text-lg font-semibold mb-1">Campaign Composer</h3>
+                                <p class="text-sm text-zinc-500">Kirim broadcast pesan dengan parameter anti-banned acak.</p>
                             </div>
 
-                            <!-- Input Area Pesan -->
-                            <div>
-                                <label class="block text-sm font-medium mb-2">Pesan (Mendukung Spintax & Variable)</label>
-                                <textarea id="blastMessage" rows="5" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm resize-none transition-all" placeholder="Halo {name}, dapatkan penawaran spesial..."></textarea>
-                                <p class="text-xs text-zinc-500 mt-2">Gunakan {name} untuk memanggil nama kontak.</p>
+                            <div class="space-y-4">
+                                <!-- Input Target -->
+                                <div>
+                                    <label class="block text-sm font-medium mb-1.5 flex justify-between">
+                                        <span>Nomor Target WhatsApp</span>
+                                        <span id="targetCounter" class="text-xs text-zinc-400">0 Nomor</span>
+                                    </label>
+                                    <textarea id="targetNumbers" rows="3" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm resize-none transition-all text-zinc-900 dark:text-white" placeholder="Contoh: 08123456789, 08987654321"></textarea>
+                                    <p class="text-xs text-zinc-400 mt-1">Pisahkan nomor dengan tanda koma (,).</p>
+                                </div>
+
+                                <!-- Template Rotation Settings -->
+                                <div>
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <label class="block text-sm font-medium">Template Rotation (Acak Otomatis)</label>
+                                        <button type="button" id="btnAddNewVariation" class="text-xs text-indigo-500 font-medium flex items-center gap-1"><i class="ph ph-plus"></i> Tambah Variasi</button>
+                                    </div>
+                                    <div id="variationInputsContainer" class="space-y-3">
+                                        <!-- Template inputs will render here dynamically -->
+                                    </div>
+                                    <p class="text-xs text-zinc-400 mt-2">Sistem akan merotasi template di atas secara bergantian untuk menghindari deteksi spam kembar.</p>
+                                </div>
+
+                                <!-- Custom Spinners & Modifiers -->
+                                <div class="p-4 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl space-y-3">
+                                    <label class="flex items-center gap-2.5 cursor-pointer">
+                                        <input type="checkbox" id="chkRandomGreeting" checked class="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 accent-zinc-950">
+                                        <span class="text-sm font-medium">Sisipkan Sapaan Acak (Random Greetings)</span>
+                                    </label>
+                                    <label class="flex items-center gap-2.5 cursor-pointer">
+                                        <input type="checkbox" id="chkRandomEmoji" checked class="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 accent-zinc-950">
+                                        <span class="text-sm font-medium">Sisipkan Emoji Acak di Akhir Pesan</span>
+                                    </label>
+                                </div>
+
+                                <!-- Anti-Spam Realtime Warning -->
+                                <div id="spamWarningBox" class="hidden p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-150 dark:border-rose-900/40 rounded-xl flex items-start gap-3 text-rose-700 dark:text-rose-300">
+                                    <i class="ph ph-warning-octagon text-xl shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <h5 class="font-medium text-sm">Peringatan Deteksi Spam Content!</h5>
+                                        <p class="text-xs mt-0.5 opacity-90">Variasi pesan Anda mengandung kata berisiko tinggi (seperti GRATIS, SLOT, CUAN, dll.). Silakan perbaiki isi pesan untuk menjaga kesehatan nomor Anda.</p>
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div class="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex justify-end gap-3">
-                                <button class="px-6 py-2.5 rounded-xl text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors">Simpan Draft</button>
-                                <button id="btnSendBlast" class="px-6 py-2.5 rounded-xl text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 transition-colors shadow-sm flex items-center gap-2">
-                                    <i class="ph ph-paper-plane-right"></i> Kirim Sekarang
-                                </button>
+                        </div>
+
+                        <!-- Live Queue Monitor (Dinamis) -->
+                        <div id="liveQueueBox" class="hidden bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-semibold">Queue Campaign Status</h4>
+                                    <span id="queueSimulationText" class="text-xs text-indigo-500 flex items-center gap-1 mt-0.5"><i class="ph ph-spinner animate-spin"></i> Idle</span>
+                                </div>
+                                <span id="queueProgressBadge" class="text-xs font-mono px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">0 / 0</span>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-zinc-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                                <div id="queueProgressBar" class="bg-zinc-900 dark:bg-white h-full w-0 transition-all duration-300"></div>
+                            </div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                                <div class="bg-zinc-50 dark:bg-zinc-800/30 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                    <span class="text-[10px] text-zinc-400 block uppercase font-semibold">Terkirim</span>
+                                    <span id="statSuccessCount" class="text-lg font-bold text-emerald-500">0</span>
+                                </div>
+                                <div class="bg-zinc-50 dark:bg-zinc-800/30 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                    <span class="text-[10px] text-zinc-400 block uppercase font-semibold">Gagal</span>
+                                    <span id="statFailedCount" class="text-lg font-bold text-rose-500">0</span>
+                                </div>
+                                <div class="bg-zinc-50 dark:bg-zinc-800/30 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                    <span class="text-[10px] text-zinc-400 block uppercase font-semibold">Sisa Waktu</span>
+                                    <span id="statEstTime" class="text-lg font-bold text-zinc-700 dark:text-zinc-300">0s</span>
+                                </div>
+                                <div class="bg-zinc-50 dark:bg-zinc-800/30 p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                                    <span class="text-[10px] text-zinc-400 block uppercase font-semibold">Avg Delay</span>
+                                    <span id="statAvgDelay" class="text-lg font-bold text-zinc-700 dark:text-zinc-300">0s</span>
+                                </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Right Side: Anti-Ban Parameter Console & Education -->
+                    <div class="lg:col-span-5 space-y-6">
+                        
+                        <!-- Device Health Monitoring -->
+                        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 space-y-4">
+                            <h4 class="font-semibold text-sm">Anti-Ban Engine Guard</h4>
+                            <div class="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl" id="deviceHealthWidget">
+                                <div class="flex items-center gap-3">
+                                    <i class="ph ph-heartbeat text-2xl text-emerald-500" id="deviceHealthIcon"></i>
+                                    <div>
+                                        <h5 class="text-sm font-semibold" id="deviceHealthTitle">Device Status: AMAN</h5>
+                                        <p class="text-xs text-zinc-500" id="deviceHealthDesc">Parameter anti-ban dikonfigurasi secara optimal.</p>
+                                    </div>
+                                </div>
+                                <span class="w-3 h-3 bg-emerald-500 rounded-full animate-ping shrink-0" id="deviceHealthPing"></span>
+                            </div>
+                        </div>
+
+                        <!-- Anti-Ban Settings Configurator -->
+                        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm p-6 space-y-5">
+                            <h4 class="font-semibold text-sm flex items-center gap-2"><i class="ph ph-shield-check text-indigo-500 text-lg"></i> Anti-Ban Configuration</h4>
+                            
+                            <!-- Preset Mode Selector -->
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">Preset Mode</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" id="btnPresetSafe" class="preset-btn active py-2.5 border border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-xs font-semibold transition-all">Safe</button>
+                                    <button type="button" id="btnPresetNormal" class="preset-btn py-2.5 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-semibold transition-all">Normal</button>
+                                    <button type="button" id="btnPresetFast" class="preset-btn py-2.5 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-semibold transition-all">Fast</button>
+                                </div>
+                                <p id="presetDescription" class="text-xs text-zinc-500 mt-2">Mode Safe: Delay panjang (30-60 detik) dengan typing simulation aktif dan jeda batch ketat. Sangat direkomendasikan.</p>
+                            </div>
+
+                            <!-- Custom Delay Input -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Min Delay (Detik)</label>
+                                    <input type="number" id="minDelay" class="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-1 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" value="30">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Max Delay (Detik)</label>
+                                    <input type="number" id="maxDelay" class="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-1 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" value="60">
+                                </div>
+                            </div>
+
+                            <!-- Batch sending configuration -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Pesan Per Batch</label>
+                                    <input type="number" id="batchSize" class="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-1 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" value="15">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Pause Batch (Menit)</label>
+                                    <input type="number" id="batchPause" class="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-1 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" value="3">
+                                </div>
+                            </div>
+
+                            <!-- Daily Limit Warning -->
+                            <div>
+                                <label class="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">Daily Limit Protection</label>
+                                <div class="flex items-center justify-between text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                    <span>Rekomendasi Batas Aman:</span>
+                                    <span id="txtDailyLimitRec" class="text-zinc-900 dark:text-white font-semibold">50 / Hari (Nomor Baru)</span>
+                                </div>
+                                <div class="mt-3 flex gap-2">
+                                    <button type="button" id="btnLimitNewNum" class="flex-1 py-1.5 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 rounded-lg text-xs border border-zinc-200 dark:border-zinc-700 transition-all font-medium">Nomor Baru</button>
+                                    <button type="button" id="btnLimitActiveNum" class="flex-1 py-1.5 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 rounded-lg text-xs border border-zinc-200 dark:border-zinc-700 transition-all font-medium text-zinc-500">Nomor Lama/Aktif</button>
+                                </div>
+                            </div>
+
+                            <button id="btnSendBlast" class="w-full py-3.5 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 text-sm font-semibold rounded-xl shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2">
+                                <i class="ph ph-rocket-launch"></i> Jalankan Anti-Ban Blast Campaign
+                            </button>
+                        </div>
+
+                        <!-- Warm-Up Recommendation Card -->
+                        <div class="bg-zinc-900 text-white dark:bg-zinc-900 border border-zinc-800 rounded-2xl shadow-sm p-6 relative overflow-hidden">
+                            <div class="absolute -right-8 -bottom-8 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+                            <div class="flex items-center gap-2.5 text-indigo-400 mb-3">
+                                <i class="ph ph-lightning-fill text-xl"></i>
+                                <span class="text-xs font-bold tracking-wider uppercase font-mono">Premium Edukasi</span>
+                            </div>
+                            <h4 class="font-bold text-base mb-2">Tips Menjaga Nomor WhatsApp Tetap Aman</h4>
+                            <ul class="space-y-2 text-xs text-zinc-400">
+                                <li class="flex items-start gap-2"><i class="ph ph-check-circle-fill text-emerald-400 text-sm mt-0.5 shrink-0"></i> Jangan langsung mengirim blast masif dari nomor baru, lakukan warm-up bertahap.</li>
+                                <li class="flex items-start gap-2"><i class="ph ph-check-circle-fill text-emerald-400 text-sm mt-0.5 shrink-0"></i> Prioritaskan kontak yang sudah menyimpan nomor Anda untuk menekan rasio "Report Spam".</li>
+                                <li class="flex items-start gap-2"><i class="ph ph-check-circle-fill text-emerald-400 text-sm mt-0.5 shrink-0"></i> Hindari menaruh link mentah secara agresif, rotasi sapaan dan emoji acak.</li>
+                            </ul>
+                        </div>
+                    </div>
+
                 </div>
             </section>
             
-            <!-- SECTION: Placeholder -->
-            <section id="templates" class="view-section hidden"><div class="empty-state"><h3>Menu Template</h3></div></section>
+            <!-- SECTION: Riwayat -->
             <section id="history" class="view-section hidden"><div class="empty-state"><h3>Menu Riwayat</h3></div></section>
             
             <!-- SECTION: Pengaturan -->
@@ -228,7 +394,7 @@
                             <label class="block text-sm font-medium mb-2 flex items-center gap-2">
                                 <i class="ph ph-key text-zinc-400"></i> Fonnte API Token
                             </label>
-                            <input type="password" id="fonnteTokenInput" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none transition-all text-sm" placeholder="Paste Token Anda di sini">
+                            <input type="password" id="fonnteTokenInput" class="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none transition-all text-sm text-zinc-900 dark:text-white" placeholder="Paste Token Anda di sini">
                             <p class="text-xs text-zinc-500 mt-2">Token akan disimpan aman secara lokal di browser Anda (Local Storage).</p>
                         </div>
                         <div class="pt-2">
@@ -243,7 +409,34 @@
         </div>
     </main>
 
-    <!-- Pastikan file JavaScript dipanggil dengan benar -->
-    <script src="app.js"></script>
+    <!-- Modal Form Tambah/Edit Template -->
+    <div id="templateModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" id="modalBackdrop"></div>
+        <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-lg p-6 relative z-10 mx-4 shadow-xl">
+            <h3 id="modalTemplateTitle" class="text-lg font-semibold mb-4 text-zinc-900 dark:text-white">Tambah Template Baru</h3>
+            <form id="templateForm" class="space-y-4">
+                <input type="hidden" id="templateId">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Nama / Judul Template</label>
+                    <input type="text" id="tplTitle" required class="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" placeholder="Contoh: Promo Akhir Bulan">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Kategori / Tag</label>
+                    <input type="text" id="tplCategory" required class="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm text-zinc-900 dark:text-white" placeholder="Contoh: Promo, Tagihan, Broadcast">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Isi Pesan Template</label>
+                    <textarea id="tplContent" required rows="6" class="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-zinc-900 outline-none text-sm resize-none text-zinc-900 dark:text-white" placeholder="Halo {name}, dapatkan penawaran spesial..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" id="btnCloseTemplateModal" class="px-4 py-2 rounded-xl text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800">Batal</button>
+                    <button type="submit" class="bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-sm font-medium px-4 py-2 rounded-xl">Simpan Template</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Loader -->
+    <script src="app.js?v=2.1"></script>
 </body>
 </html>
