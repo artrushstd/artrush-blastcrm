@@ -1,7 +1,7 @@
 console.log("Sistem CRM Premium & WA Blast Engine v3.1 aktif...");
 
 // ==========================================
-// 1. INISIALISASI SUPABASE (FAILSAFE VARIABLE BINDING)
+// 1. INISIALISASI SUPABASE (DIAMANKAN DARI TABRAKAN VARIABEL GLOBAL)
 // ==========================================
 const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
@@ -19,7 +19,7 @@ try {
     console.error("Gagal menginisialisasi Supabase:", error);
 }
 
-// Fungsi Proteksi: Verifikasi status login aktif
+// Fungsi Proteksi: Tendang ke halaman login jika tidak memiliki sesi
 async function checkAuth() {
     if (!supabaseClient) return;
     try {
@@ -45,20 +45,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const html = document.documentElement;
 
-    // --- DEKLARASI EXPLICIT SEMUA ELEMENT DOM (MENCEGAH REFERENCE ERROR) ---
-    const templatesGrid = document.getElementById('templatesGrid');
-    const templateEmptyState = document.getElementById('templateEmptyState');
-    const blastTemplateSelect = document.getElementById('blastTemplateSelect');
-    const templateModal = document.getElementById('templateModal');
-    const templateForm = document.getElementById('templateForm');
-    const btnOpenTemplateModal = document.getElementById('btnOpenTemplateModal');
-    const btnCloseTemplateModal = document.getElementById('btnCloseTemplateModal');
-    const modalBackdrop = document.getElementById('modalBackdrop');
-    const templateIdInput = document.getElementById('templateId');
-    const tplTitleInput = document.getElementById('tplTitle');
-    const tplCategoryInput = document.getElementById('tplCategory');
-    const tplContentInput = document.getElementById('tplContent');
+    // ======================================================================
+    // --- DEKLARASI EXPLICIT SEMUA ELEMENT DOM DI ATAS (MENCEGAH REFERENCE ERROR) --- [1]
+    // ======================================================================
+    
+    // UI Global & Navigation
+    const navItems = document.querySelectorAll('.nav-item');
+    const viewSections = document.querySelectorAll('.view-section');
+    const pageTitle = document.getElementById('pageTitle');
+    const darkToggle = document.getElementById('darkModeToggle');
+    const logoutBtn = document.getElementById('logoutBtn');
 
+    // CRM / Contacts Page
     const crmTableBody = document.getElementById('crmTableBody');
     const crmEmptyState = document.getElementById('crmEmptyState');
     const crmTableContainer = document.getElementById('crmTableContainer');
@@ -67,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const txtBulkSelectedCount = document.getElementById('txtBulkSelectedCount');
     const chkSelectAllCRM = document.getElementById('chkSelectAllCRM');
 
+    // Customer Modal
     const customerModal = document.getElementById('customerModal');
     const customerForm = document.getElementById('customerForm');
     const btnAddCustomer = document.getElementById('btnAddCustomer');
@@ -74,6 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const custModalBackdrop = document.getElementById('custModalBackdrop');
     const waValidationWarning = document.getElementById('waValidationWarning');
 
+    // Customer Detail Drawer
     const customerDrawer = document.getElementById('customerDrawer');
     const btnCloseDrawer = document.getElementById('btnCloseDrawer');
     const drawerAvatar = document.getElementById('drawerAvatar');
@@ -87,11 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveDrawerNote = document.getElementById('btnSaveDrawerNote');
     const drawerTimeline = document.getElementById('drawerTimeline');
 
+    // CRM Badges & Analytics
     const badgeSegAll = document.getElementById('badgeSegAll');
     const badgeSegVip = document.getElementById('badgeSegVip');
     const badgeSegHot = document.getElementById('badgeSegHot');
     const badgeSegDormant = document.getElementById('badgeSegDormant');
-
     const crmStatTotal = document.getElementById('crmStatTotal');
     const crmStatActive = document.getElementById('crmStatActive');
     const crmStatHot = document.getElementById('crmStatHot');
@@ -99,8 +99,69 @@ document.addEventListener('DOMContentLoaded', () => {
     const crmStatLTV = document.getElementById('crmStatLTV');
     const homeTotalContacts = document.getElementById('homeTotalContacts');
 
+    // Message Templates Page [2]
+    const templatesGrid = document.getElementById('templatesGrid');
+    const templateEmptyState = document.getElementById('templateEmptyState');
+    const blastTemplateSelect = document.getElementById('blastTemplateSelect');
+    const templateModal = document.getElementById('templateModal');
+    const templateForm = document.getElementById('templateForm');
+    const btnOpenTemplateModal = document.getElementById('btnOpenTemplateModal');
+    const btnCloseTemplateModal = document.getElementById('btnCloseTemplateModal');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const templateIdInput = document.getElementById('templateId');
+    const tplTitleInput = document.getElementById('tplTitle');
+    const tplCategoryInput = document.getElementById('tplCategory');
+    const tplContentInput = document.getElementById('tplContent');
+
+    // WA Blast Page & Anti-Ban Config [1]
+    const targetNumbersInput = document.getElementById('targetNumbers');
+    const targetCounter = document.getElementById('targetCounter');
+    const variationContainer = document.getElementById('variationInputsContainer');
+    const btnAddNewVariation = document.getElementById('btnAddNewVariation');
+    const spamWarningBox = document.getElementById('spamWarningBox');
+    
+    const presetSafe = document.getElementById('btnPresetSafe');
+    const presetNormal = document.getElementById('btnPresetNormal');
+    const presetFast = document.getElementById('btnPresetFast');
+
+    const minDelayInput = document.getElementById('minDelay');
+    const maxDelayInput = document.getElementById('maxDelay');
+    const batchSizeInput = document.getElementById('batchSize');
+    const batchPauseInput = document.getElementById('batchPause');
+    const presetDesc = document.getElementById('presetDescription');
+
+    const btnLimitNewNum = document.getElementById('btnLimitNewNum');
+    const btnLimitActiveNum = document.getElementById('btnLimitActiveNum');
+    const txtDailyLimitRec = document.getElementById('txtDailyLimitRec');
+
+    const deviceHealthWidget = document.getElementById('deviceHealthWidget');
+    const deviceHealthIcon = document.getElementById('deviceHealthIcon');
+    const deviceHealthTitle = document.getElementById('deviceHealthTitle');
+    const deviceHealthDesc = document.getElementById('deviceHealthDesc');
+    const deviceHealthPing = document.getElementById('deviceHealthPing');
+    const homeSpamRiskBadge = document.getElementById('homeSpamRiskBadge');
+
+    // Queue System & Campaign
+    const btnSendBlastPremium = document.getElementById('btnSendBlast');
+    const liveQueueBox = document.getElementById('liveQueueBox');
+    const queueSimulationText = document.getElementById('queueSimulationText');
+    const queueProgressBadge = document.getElementById('queueProgressBadge');
+    const queueProgressBar = document.getElementById('queueProgressBar');
+    
+    const statSuccessCount = document.getElementById('statSuccessCount');
+    const statFailedCount = document.getElementById('statFailedCount');
+    const statEstTime = document.getElementById('statEstTime');
+    const statAvgDelay = document.getElementById('statAvgDelay');
+
+    // History & Settings Page [1]
+    const historyTableBody = document.getElementById('historyTableBody');
+    const homeBlastTerkirim = document.getElementById('homeBlastTerkirim');
+    const tokenInput = document.getElementById('fonnteTokenInput');
+    const btnSaveFonnte = document.getElementById('btnSaveFonnte');
+
+    // ======================================================================
+
     // --- A. FUNGSI LOGOUT ---
-    const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
             const result = await Swal.fire({
@@ -120,19 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- B. SPA NAVIGATION LOGIC ---
-    const navItems = document.querySelectorAll('.nav-item');
-    const viewSections = document.querySelectorAll('.view-section');
-    const pageTitle = document.getElementById('pageTitle');
-
-    const titles = {
-        'home': 'Dashboard',
-        'contacts': 'CRM Customer Management',
-        'templates': 'Template Pesan',
-        'blast': 'Anti-Ban WA Blast Panel',
-        'history': 'Riwayat Blast',
-        'settings': 'Pengaturan Sistem'
-    };
-
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
@@ -160,7 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- C. DARK MODE TOGGLE ---
-    const darkToggle = document.getElementById('darkModeToggle');
     if (darkToggle) {
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             html.classList.add('dark');
@@ -212,14 +259,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // MODULE: ADVANCED CRM CUSTOMER ENGINE
+    // MODULE: ADVANCED CRM CUSTOMER ENGINE (contacts)
     // ==========================================
-    const defaultCustomers = [
-        { id: "17b354ca-fa2e-40dc-bc76-d183df592651", name: "Sarah Connor", phone: "6281234567890", tags: "VIP Customer, Hot Lead", transactions: 9500000, source: "Instagram", last_active: "2026-05-20", score: 85 },
-        { id: "e6f4773c-ba32-47ef-bc90-9988ff77ea10", name: "John Doe", phone: "6281987654321", tags: "Warm Lead", transactions: 1200000, source: "Website Direct", last_active: "2026-05-15", score: 45 },
-        { id: "28cfa100-332e-4cf4-90aa-bd88aa33ba21", name: "T-800 Terminator", phone: "6285611223344", tags: "Dormant Customer, Cold Lead", transactions: 0, source: "Referral", last_active: "2026-04-01", score: 10 }
-    ];
-
     let crmData = JSON.parse(localStorage.getItem('saved_crm_data')) || defaultCustomers;
     let activeSegment = "all";
     let selectedCRMIds = [];
@@ -396,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DEBOUNCE SEARCH ---
-    let searchTimeout;
     if (crmSearch) {
         crmSearch.addEventListener('input', () => {
             clearTimeout(searchTimeout);
@@ -518,9 +558,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- COLUMN CUSTOMIZATION ---
-    const btnToggleColumns = document.getElementById('btnToggleColumns');
-    const columnSelectorPopover = document.getElementById('columnSelectorPopover');
-
     if (btnToggleColumns && columnSelectorPopover) {
         btnToggleColumns.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -551,7 +588,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- PRO EXPORT EXCEL ---
-    const btnExportMenu = document.getElementById('btnExportMenu');
     if (btnExportMenu) {
         btnExportMenu.addEventListener('click', () => {
             const ws = XLSX.utils.json_to_sheet(crmData);
@@ -563,7 +599,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- SMART IMPORT CSV/EXCEL ---
-    const importCRMExcel = document.getElementById('importCRMExcel');
     if (importCRMExcel) {
         importCRMExcel.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -784,35 +819,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- MANUAL CUSTOMER ADD & UPDATE ---
-    function openCustomerModal(id = null) {
-        if (!customerModal) return;
-        customerModal.classList.remove('hidden');
-
-        if (id) {
-            const cust = crmData.find(x => x.id === id);
-            if (cust) {
-                document.getElementById('custModalTitle').innerText = "Edit Detail Customer";
-                document.getElementById('custIndex').value = cust.id;
-                document.getElementById('custName').value = cust.name;
-                document.getElementById('custPhone').value = cust.phone;
-                document.getElementById('custTags').value = cust.tags;
-                document.getElementById('custTransactions').value = cust.transactions;
-                document.getElementById('custSource').value = cust.source || 'Manual';
-            }
-        } else {
-            document.getElementById('custModalTitle').innerText = "Tambah Customer Baru";
-            customerForm.reset();
-            document.getElementById('custIndex').value = '';
-        }
-    }
-
-    function closeCustomerModal() {
-        if (customerModal) {
-            customerModal.classList.add('hidden');
-            waValidationWarning.classList.add('hidden');
-        }
-    }
-
     if (btnAddCustomer) btnAddCustomer.addEventListener('click', () => openCustomerModal());
     if (btnCloseCustModal) btnCloseCustModal.addEventListener('click', closeCustomerModal);
     if (custModalBackdrop) custModalBackdrop.addEventListener('click', closeCustomerModal);
@@ -926,10 +932,8 @@ document.addEventListener('DOMContentLoaded', () => {
     syncContactsFromSupabase();
 
     // ==========================================
-    // MODULE: CRUDS TEMPLATE PESAN
+    // MODULE: CRUDS TEMPLATE PESAN [2]
     // ==========================================
-    let templates = JSON.parse(localStorage.getItem('saved_templates')) || defaultTemplates;
-
     function renderTemplates() {
         if (!templatesGrid || !templateEmptyState) return;
         
@@ -1100,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // MODULE: ADVANCED ANTI-BAN ENGINE LOGIC
+    // MODULE: ADVANCED ANTI-BAN ENGINE LOGIC [1]
     // ==========================================
     if (targetNumbersInput) {
         targetNumbersInput.addEventListener('input', () => {
@@ -1114,7 +1118,68 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Inisialisasi awal variasi template acak
+    // Fungsi menambahkan input variasi template pesan
+    function addVariationInput(initialContent = '') {
+        if (!variationContainer) return;
+        const index = variationContainer.children.length + 1;
+        const div = document.createElement('div');
+        div.className = "relative group flex items-start gap-2 bg-zinc-50 dark:bg-zinc-800/40 p-3.5 rounded-xl border border-zinc-100 dark:border-zinc-800 transition-all";
+        div.innerHTML = `
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs font-semibold text-zinc-400">Variasi Template #${index}</span>
+                    <button type="button" class="btn-remove-variation text-xs text-rose-500 hover:opacity-80 transition-opacity hidden group-hover:block"><i class="ph ph-trash"></i> Hapus</button>
+                </div>
+                <textarea rows="3" class="tpl-rotation-input w-full bg-transparent outline-none text-sm resize-none text-zinc-900 dark:text-white" placeholder="Masukkan variasi pesan lainnya disini...">${initialContent}</textarea>
+            </div>
+        `;
+        variationContainer.appendChild(div);
+
+        const textarea = div.querySelector('.tpl-rotation-input');
+        textarea.addEventListener('input', () => {
+            scanForSpamContent();
+        });
+
+        div.querySelector('.btn-remove-variation').addEventListener('click', () => {
+            if (variationContainer.children.length > 1) {
+                div.remove();
+                reindexVariationLabels();
+                scanForSpamContent();
+            } else {
+                Swal.fire('Oops', 'Harus menyisakan minimal 1 variasi pesan.', 'warning');
+            }
+        });
+    }
+
+    function reindexVariationLabels() {
+        if (!variationContainer) return;
+        Array.from(variationContainer.children).forEach((child, index) => {
+            child.querySelector('span').textContent = `Variasi Template #${index + 1}`;
+        });
+    }
+
+    function scanForSpamContent() {
+        let isSpamFound = false;
+        const textareas = document.querySelectorAll('.tpl-rotation-input');
+        
+        textareas.forEach(textarea => {
+            const text = textarea.value.toUpperCase();
+            spamKeywords.forEach(keyword => {
+                if (text.includes(keyword.toUpperCase())) {
+                    isSpamFound = true;
+                }
+            });
+        });
+
+        if (isSpamFound) {
+            if (spamWarningBox) spamWarningBox.classList.remove('hidden');
+            updateDeviceHealth('warning');
+        } else {
+            if (spamWarningBox) spamWarningBox.classList.add('hidden');
+            updateDeviceHealth('safe');
+        }
+    }
+
     if (btnAddNewVariation) {
         btnAddNewVariation.addEventListener('click', () => {
             if (variationContainer.children.length < 5) {
@@ -1124,6 +1189,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    addVariationInput("Halo kak, kami ada penawaran menarik khusus hari ini!");
 
     // --- LOGIKA SETTING PRESET ANTI-BAN ---
     if (presetSafe) presetSafe.addEventListener('click', () => selectPreset('Safe'));
