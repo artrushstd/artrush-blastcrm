@@ -52,7 +52,9 @@
         // Menggunakan project credential milik Anda
         const supabaseUrl = 'https://wxugkuzdpbhojydqulmn.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4dWdrdXpkcGJob2p5ZHF1bG1uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NzMxNDQsImV4cCI6MjA5NTE0OTE0NH0.FMTP85NEtV9v73XaclyTwMIeYt2VnI-F0n1pDlEiH8g';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // NAMA VARIABEL DIUBAH MENJADI supabaseClient AGAR TIDAK TABRAKAN DENGAN CDN
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -66,8 +68,8 @@
                 didOpen: () => { Swal.showLoading() } 
             });
 
-            // Proses autentikasi asli dengan database Supabase
-            const { data, error } = await supabase.auth.signInWithPassword({
+            // GUNAKAN supabaseClient DI SINI
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: emailInput,
                 password: passwordInput,
             });
